@@ -1,4 +1,4 @@
-package com.github.flaviodev.employee.msgbus.base.pubsub;
+package com.github.flaviodev.employee.messagebus.base.pubsub;
 
 import org.springframework.cloud.gcp.pubsub.core.PubSubOperations;
 import org.springframework.cloud.gcp.pubsub.integration.AckMode;
@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.messaging.MessageChannel;
 
-import com.github.flaviodev.employee.msgbus.base.MessageReceiverRouting;
+import com.github.flaviodev.employee.messagebus.base.MessageReceiverRouting;
 
 public interface MessageReceiverRoutingPubsub extends MessageReceiverRouting {
 

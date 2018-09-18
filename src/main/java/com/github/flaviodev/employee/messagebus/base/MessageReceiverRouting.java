@@ -1,4 +1,4 @@
-package com.github.flaviodev.employee.msgbus.base;
+package com.github.flaviodev.employee.messagebus.base;
 
 import org.springframework.messaging.Message;
 

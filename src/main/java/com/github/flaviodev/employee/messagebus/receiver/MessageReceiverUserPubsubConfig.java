@@ -1,4 +1,4 @@
-package com.github.flaviodev.employee.config.receiver;
+package com.github.flaviodev.employee.messagebus.receiver;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cloud.gcp.pubsub.core.PubSubOperations;
@@ -9,9 +9,9 @@ import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
 
+import com.github.flaviodev.employee.messagebus.base.MessageProcessor;
+import com.github.flaviodev.employee.messagebus.base.pubsub.MessageReceiverPubsub;
 import com.github.flaviodev.employee.model.Employee;
-import com.github.flaviodev.employee.msgbus.base.MessageProcessor;
-import com.github.flaviodev.employee.msgbus.base.pubsub.MessageReceiverPubsub;
 
 //@Configuration
 public class MessageReceiverUserPubsubConfig implements MessageReceiverPubsub<Employee> {

@@ -9,9 +9,9 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.flaviodev.employee.IntegrationMessageBusApplication;
 import com.github.flaviodev.employee.SpringContext;
-import com.github.flaviodev.employee.config.sender.MessageSenderUser;
+import com.github.flaviodev.employee.messagebus.base.TopicManagement;
+import com.github.flaviodev.employee.messagebus.sender.MessageSenderUser;
 import com.github.flaviodev.employee.model.Employee;
-import com.github.flaviodev.employee.msgbus.base.TopicManagement;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest

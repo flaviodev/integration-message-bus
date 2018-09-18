@@ -1,4 +1,4 @@
-package com.github.flaviodev.employee.config.sender;
+package com.github.flaviodev.employee.messagebus.sender;
 
 import org.springframework.cloud.gcp.pubsub.core.PubSubOperations;
 import org.springframework.context.annotation.Bean;
@@ -12,9 +12,9 @@ import org.springframework.messaging.MessageHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.flaviodev.employee.SpringContext;
+import com.github.flaviodev.employee.messagebus.base.pubsub.MessageSenderPubsub;
+import com.github.flaviodev.employee.messagebus.base.pubsub.PubSubMessagingGateway;
 import com.github.flaviodev.employee.model.Employee;
-import com.github.flaviodev.employee.msgbus.base.pubsub.MessageSenderPubsub;
-import com.github.flaviodev.employee.msgbus.base.pubsub.PubSubMessagingGateway;
 
 //@Configuration
 public class MessageSenderUserPubsubConfig implements MessageSenderUser, MessageSenderPubsub<Employee> {

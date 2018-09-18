@@ -1,4 +1,4 @@
-package com.github.flaviodev.employee.msgbus.base.pubsub;
+package com.github.flaviodev.employee.messagebus.base.pubsub;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
-import com.github.flaviodev.employee.msgbus.base.TopicManagement;
+import com.github.flaviodev.employee.messagebus.base.TopicManagement;
 import com.google.pubsub.v1.Subscription;
 import com.google.pubsub.v1.Topic;
 

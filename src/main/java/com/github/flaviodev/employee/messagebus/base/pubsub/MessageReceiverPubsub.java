@@ -1,4 +1,4 @@
-package com.github.flaviodev.employee.msgbus.base.pubsub;
+package com.github.flaviodev.employee.messagebus.base.pubsub;
 
 import java.io.IOException;
 
@@ -13,7 +13,7 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.flaviodev.employee.msgbus.base.MessageReceiver;
+import com.github.flaviodev.employee.messagebus.base.MessageReceiver;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 
 public interface MessageReceiverPubsub<T> extends MessageReceiver<T> {

@@ -1,4 +1,4 @@
-package com.github.flaviodev.employee.msgbus.base.pubsub;
+package com.github.flaviodev.employee.messagebus.base.pubsub;
 
 import org.springframework.messaging.handler.annotation.Header;
 

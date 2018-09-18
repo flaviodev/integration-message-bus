@@ -1,4 +1,4 @@
-package com.github.flaviodev.employee.config.receiver;
+package com.github.flaviodev.employee.messagebus.receiver;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -13,7 +13,7 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.support.MessageBuilder;
 
-import com.github.flaviodev.employee.msgbus.base.pubsub.MessageReceiverRoutingPubsub;
+import com.github.flaviodev.employee.messagebus.base.pubsub.MessageReceiverRoutingPubsub;
 
 //@Configuration
 public class MessageReceiverRoutingPubsubConfig implements MessageReceiverRoutingPubsub {
