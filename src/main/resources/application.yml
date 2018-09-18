@@ -1,0 +1,21 @@
+server:
+  port: 8800
+
+spring:
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5432/employee
+    username: postgres
+    password: root
+    driver-class-name: org.postgresql.Driver
+    platform: org.hibernate.dialect.PostgreSQLDialect
+  jpa:
+    open-in-view: true
+    show-sql: false
+  cloud:
+    gcp: 
+      project-id: erp-syncode-homolog
+      credentials:
+        location: gcloud/credential.json
+  
+flyway:
+  baseline-on-migrate: true
