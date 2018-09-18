@@ -8,7 +8,7 @@ import org.springframework.web.servlet.view.RedirectView;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.flaviodev.employee.SpringContext;
 import com.github.flaviodev.employee.model.Employee;
-import com.github.flaviodev.employee.tenanty.TenantContext;
+import com.github.flaviodev.employee.tenant.TenantContext;
 
 @RestController
 public class WebAppController {

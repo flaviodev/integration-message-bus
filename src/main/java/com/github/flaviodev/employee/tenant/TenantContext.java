@@ -1,4 +1,4 @@
-package com.github.flaviodev.employee.tenanty;
+package com.github.flaviodev.employee.tenant;
 
 import lombok.extern.log4j.Log4j;
 

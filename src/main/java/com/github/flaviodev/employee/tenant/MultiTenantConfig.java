@@ -1,4 +1,4 @@
-package com.github.flaviodev.employee.tenanty;
+package com.github.flaviodev.employee.tenant;
 
 import java.util.HashMap;
 import java.util.Map;

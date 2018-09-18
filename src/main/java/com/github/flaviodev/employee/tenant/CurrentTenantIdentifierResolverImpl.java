@@ -1,4 +1,4 @@
-package com.github.flaviodev.employee.tenanty;
+package com.github.flaviodev.employee.tenant;
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
 import org.springframework.stereotype.Component;
 
