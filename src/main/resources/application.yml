@@ -11,11 +11,6 @@ spring:
   jpa:
     open-in-view: true
     show-sql: false
-  cloud:
-    gcp: 
-      project-id: erp-syncode-homolog
-      credentials:
-        location: gcloud/credential.json
   
 flyway:
   baseline-on-migrate: true

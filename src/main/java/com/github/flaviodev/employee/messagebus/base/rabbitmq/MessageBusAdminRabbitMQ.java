@@ -1,11 +1,13 @@
-package com.github.flaviodev.employee.messagebus.base.pubsub;
+package com.github.flaviodev.employee.messagebus.base.rabbitmq;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
+import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
+import org.springframework.amqp.rabbit.core.RabbitManagementTemplate;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.gcp.pubsub.PubSubAdmin;
-import org.springframework.cloud.gcp.pubsub.core.PubSubTemplate;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -17,8 +19,6 @@ import com.github.flaviodev.employee.messagebus.base.MessageBusAdmin;
 import com.github.flaviodev.employee.messagebus.base.MessageSubscription;
 import com.github.flaviodev.employee.messagebus.base.MessageTopic;
 import com.google.common.collect.ImmutableMap;
-import com.google.pubsub.v1.Subscription;
-import com.google.pubsub.v1.Topic;
 
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -26,44 +26,58 @@ import lombok.extern.log4j.Log4j;
 
 @Log4j
 @Configuration
-public class MessageBusAdminPubSub implements MessageBusAdmin {
+public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 
 	private static ObjectMapper mapper;
+	private RabbitAdmin rabbitAdmin;
 
 	@Autowired
-	private PubSubAdmin pubSubAdmin;
+    private RabbitTemplate rabbitTemplate;
+	
+	@Autowired
+	private RabbitManagementTemplate managementTemplate;
 
 	@Autowired
-	private PubSubTemplate pubSubTemplate;
-
+    private ConnectionFactory connectionFactory;
+	
+	private RabbitAdmin getRabbitAdmin() {
+		if(rabbitAdmin==null) 
+			rabbitAdmin = new RabbitAdmin(connectionFactory);
+		
+		return rabbitAdmin;
+	}
+	
 	@Override
 	public void createTopic(@NonNull String topicName) {
-		pubSubAdmin.createTopic(topicName);
+		getRabbitAdmin().declareExchange(new TopicExchange(topicName));
 	}
 
 	@Override
 	public void deleteTopic(@NonNull String topicName) {
-		pubSubAdmin.deleteTopic(topicName);
+		getRabbitAdmin().deleteExchange(topicName);
 	}
 
 	@Override
 	public List<String> listTopics() {
-		return pubSubAdmin.listTopics().stream().map(Topic::getName).collect(Collectors.toList());
+		return null;
+		
+		//return pubSubAdmin.listTopics().stream().map(Topic::getName).collect(Collectors.toList());
 	}
 
 	@Override
 	public void criarInscricao(@NonNull String subscriptionName, @NonNull String topicName) {
-		pubSubAdmin.createSubscription(subscriptionName, topicName);
+		//pubSubAdmin.createSubscription(subscriptionName, topicName);
 	}
 
 	@Override
 	public void deleteSubscription(@NonNull String subscriptionName) {
-		pubSubAdmin.deleteSubscription(subscriptionName);
+		//pubSubAdmin.deleteSubscription(subscriptionName);
 	}
 
 	@Override
 	public List<String> listSubscriptions() {
-		return pubSubAdmin.listSubscriptions().stream().map(Subscription::getName).collect(Collectors.toList());
+		return null;
+		//return pubSubAdmin.listSubscriptions().stream().map(Subscription::getName).collect(Collectors.toList());
 	}
 
 	@Bean
@@ -75,12 +89,14 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 
 	@Override
 	public boolean isRegistredTopic(@NonNull String topicName) {
-		return listTopics().stream().filter(topico -> topico.endsWith(topicName)).count() > 0;
+		return false;
+		//return listTopics().stream().filter(topico -> topico.endsWith(topicName)).count() > 0;
 	}
 
 	@Override
 	public boolean isRegistredSubscription(@NonNull String subscriptionName) {
-		return listSubscriptions().stream().filter(inscricao -> inscricao.endsWith(subscriptionName)).count() > 0;
+		return false;
+		//return listSubscriptions().stream().filter(inscricao -> inscricao.endsWith(subscriptionName)).count() > 0;
 	}
 
 	@Override
@@ -105,13 +121,13 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 
 		verifySubscription(subscriptionName, topicName);
 
-		pubSubTemplate.subscribe(subscriptionName, (message, consumer) -> {
-			log.info("consuming message [" + subscriptionName + "]: " + message.getData().toStringUtf8());
-			consumer.ack();
-
-			action.apply(ImmutableMap.copyOf(message.getAttributesMap()),
-					parseJson(payloadType, message.getData().toByteArray()));
-		});
+//		pubSubTemplate.subscribe(subscriptionName, (message, consumer) -> {
+//			log.info("consuming message [" + subscriptionName + "]: " + message.getData().toStringUtf8());
+//			consumer.ack();
+//
+//			action.apply(ImmutableMap.copyOf(message.getAttributesMap()),
+//					parseJson(payloadType, message.getData().toByteArray()));
+//		});
 
 		return this;
 	}
@@ -125,12 +141,12 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 	@Override
 	public <T> void sendMessage(@NonNull String topicName, @NonNull Class<T> payloadType, @NonNull T payloadObject,
 			ImmutableMap<String, String> headers) {
-		if (headers == null)
-			headers = ImmutableMap.of();
-
-		String json = stringfyJson(payloadObject);
-		log.info("Sending message [" + topicName + "]: " + json);
-		pubSubTemplate.publish(topicName, json, headers);
+//		if (headers == null)
+//			headers = ImmutableMap.of();
+//
+//		String json = stringfyJson(payloadObject);
+//		log.info("Sending message [" + topicName + "]: " + json);
+//		pubSubTemplate.publish(topicName, json, headers);
 	}
 
 	private static ObjectMapper getObjectMapper() {
