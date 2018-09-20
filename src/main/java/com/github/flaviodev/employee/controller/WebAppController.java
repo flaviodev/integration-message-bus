@@ -7,8 +7,8 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.flaviodev.employee.SpringContext;
+import com.github.flaviodev.employee.messagebus.SenderEmployeeRouting;
 import com.github.flaviodev.employee.model.Employee;
-import com.github.flaviodev.employee.tenant.TenantContext;
 
 @RestController
 public class WebAppController {
@@ -20,9 +20,7 @@ public class WebAppController {
 		Employee employee = new Employee(employeeName);
 		employee.save();
 
-		// MessageSenderUser sender = SpringContext.getBean(MessageSenderUser.class);
-		// sender.send(new Employee(name));
+		SpringContext.getBean(SenderEmployeeRouting.class).send(tenantId, employee);
 		return new RedirectView("/");
 	}
-
 }
