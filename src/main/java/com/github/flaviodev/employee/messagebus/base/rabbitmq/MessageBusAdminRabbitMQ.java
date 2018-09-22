@@ -1,13 +1,12 @@
 package com.github.flaviodev.employee.messagebus.base.rabbitmq;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import org.springframework.amqp.core.TopicExchange;
-import org.springframework.amqp.rabbit.connection.ConnectionFactory;
-import org.springframework.amqp.rabbit.core.RabbitAdmin;
+import org.springframework.amqp.core.Exchange;
+import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitManagementTemplate;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -19,6 +18,13 @@ import com.github.flaviodev.employee.messagebus.base.MessageBusAdmin;
 import com.github.flaviodev.employee.messagebus.base.MessageSubscription;
 import com.github.flaviodev.employee.messagebus.base.MessageTopic;
 import com.google.common.collect.ImmutableMap;
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.Consumer;
+import com.rabbitmq.client.DefaultConsumer;
+import com.rabbitmq.client.Envelope;
 
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -29,55 +35,66 @@ import lombok.extern.log4j.Log4j;
 public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 
 	private static ObjectMapper mapper;
-	private RabbitAdmin rabbitAdmin;
 
-	@Autowired
-    private RabbitTemplate rabbitTemplate;
-	
-	@Autowired
-	private RabbitManagementTemplate managementTemplate;
+	private static RabbitManagementTemplate managementTemplate;
 
-	@Autowired
-    private ConnectionFactory connectionFactory;
-	
-	private RabbitAdmin getRabbitAdmin() {
-		if(rabbitAdmin==null) 
-			rabbitAdmin = new RabbitAdmin(connectionFactory);
-		
-		return rabbitAdmin;
+	private RabbitManagementTemplate getRabbitManagementTemplate() {
+
+		if (managementTemplate == null)
+			managementTemplate = new RabbitManagementTemplate();
+
+		return managementTemplate;
 	}
-	
+
+	private static Channel channel;
+
+	@SneakyThrows
+	private Channel getChannel() {
+
+		if (channel == null) {
+			ConnectionFactory factory = new ConnectionFactory();
+			factory.setHost("localhost");
+			Connection connection = factory.newConnection();
+			channel = connection.createChannel();
+		}
+
+		return channel;
+	}
+
 	@Override
+	@SneakyThrows
 	public void createTopic(@NonNull String topicName) {
-		getRabbitAdmin().declareExchange(new TopicExchange(topicName));
+		getChannel().exchangeDeclare(topicName, "fanout");
 	}
 
 	@Override
+	@SneakyThrows
 	public void deleteTopic(@NonNull String topicName) {
-		getRabbitAdmin().deleteExchange(topicName);
+		getChannel().exchangeDelete(topicName);
 	}
 
 	@Override
 	public List<String> listTopics() {
-		return null;
-		
-		//return pubSubAdmin.listTopics().stream().map(Topic::getName).collect(Collectors.toList());
+		return getRabbitManagementTemplate().getExchanges().stream().map(Exchange::getName)
+				.collect(Collectors.toList());
 	}
 
 	@Override
-	public void criarInscricao(@NonNull String subscriptionName, @NonNull String topicName) {
-		//pubSubAdmin.createSubscription(subscriptionName, topicName);
+	@SneakyThrows
+	public void createSubscription(@NonNull String subscriptionName, @NonNull String topicName, String tentantId) {
+		getChannel().queueDeclare(subscriptionName, true, true, false, null);
+		getChannel().queueBind(subscriptionName, topicName, tentantId!=null ? tentantId :"");
 	}
 
 	@Override
+	@SneakyThrows
 	public void deleteSubscription(@NonNull String subscriptionName) {
-		//pubSubAdmin.deleteSubscription(subscriptionName);
+		getChannel().queueDelete(subscriptionName);
 	}
 
 	@Override
 	public List<String> listSubscriptions() {
-		return null;
-		//return pubSubAdmin.listSubscriptions().stream().map(Subscription::getName).collect(Collectors.toList());
+		return getRabbitManagementTemplate().getQueues().stream().map(Queue::getName).collect(Collectors.toList());
 	}
 
 	@Bean
@@ -89,46 +106,49 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 
 	@Override
 	public boolean isRegistredTopic(@NonNull String topicName) {
-		return false;
-		//return listTopics().stream().filter(topico -> topico.endsWith(topicName)).count() > 0;
+		return listTopics().stream().filter(topic -> topic.equals(topicName)).count() > 0;
 	}
 
 	@Override
 	public boolean isRegistredSubscription(@NonNull String subscriptionName) {
-		return false;
-		//return listSubscriptions().stream().filter(inscricao -> inscricao.endsWith(subscriptionName)).count() > 0;
+		return listSubscriptions().stream().filter(subscription -> subscription.equals(subscriptionName)).count() > 0;
 	}
 
 	@Override
-	public void verifySubscription(@NonNull String subscriptionName, @NonNull String topicName) {
+	public void verifySubscription(@NonNull String subscriptionName, @NonNull String topicName, String tentantId) {
 
 		if (!isRegistredTopic(topicName))
 			createTopic(topicName);
 
 		if (!isRegistredSubscription(subscriptionName))
-			criarInscricao(subscriptionName, topicName);
+			createSubscription(subscriptionName, topicName, tentantId);
 	}
 
 	@Override
-	public <T> MessageBusAdmin consumeMessages(@NonNull MessageSubscription subscription, @NonNull Class<T> payloadType,
-			@NonNull ActionOnConsumeMessage<T> action) {
-		return consumeMessages(subscription.getName(), subscription.getTopicName(), payloadType, action);
-	}
-
-	@Override
-	public <T> MessageBusAdmin consumeMessages(@NonNull String subscriptionName, @NonNull String topicName,
+	public <T> MessageBusAdmin consumeMessages(@NonNull MessageSubscription subscription, String tentantId,
 			@NonNull Class<T> payloadType, @NonNull ActionOnConsumeMessage<T> action) {
+		return consumeMessages(subscription.getName(), subscription.getTopicName(), tentantId, payloadType, action);
+	}
 
-		verifySubscription(subscriptionName, topicName);
+	@Override
+	@SneakyThrows
+	public <T> MessageBusAdmin consumeMessages(@NonNull String subscriptionName, @NonNull String topicName,
+			String tenantId, @NonNull Class<T> payloadType, @NonNull ActionOnConsumeMessage<T> action) {
 
-//		pubSubTemplate.subscribe(subscriptionName, (message, consumer) -> {
-//			log.info("consuming message [" + subscriptionName + "]: " + message.getData().toStringUtf8());
-//			consumer.ack();
-//
-//			action.apply(ImmutableMap.copyOf(message.getAttributesMap()),
-//					parseJson(payloadType, message.getData().toByteArray()));
-//		});
+		System.out.println("-------------------->"+subscriptionName);
+		
+		verifySubscription(subscriptionName, topicName, tenantId);
 
+		Consumer consumer = new DefaultConsumer(getChannel()) {
+			@Override
+			public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
+					byte[] body) throws IOException {
+				String message = new String(body, "UTF-8");
+				System.out.println(" [x] Received '" + message + "'");
+				action.apply(ImmutableMap.of(), parseJson(payloadType, body));
+			}
+		};
+		channel.basicConsume(subscriptionName, true, consumer);
 		return this;
 	}
 
@@ -139,14 +159,18 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 	}
 
 	@Override
+	@SneakyThrows
 	public <T> void sendMessage(@NonNull String topicName, @NonNull Class<T> payloadType, @NonNull T payloadObject,
 			ImmutableMap<String, String> headers) {
-//		if (headers == null)
-//			headers = ImmutableMap.of();
-//
-//		String json = stringfyJson(payloadObject);
-//		log.info("Sending message [" + topicName + "]: " + json);
-//		pubSubTemplate.publish(topicName, json, headers);
+		if (headers == null)
+			headers = ImmutableMap.of();
+
+		String tenantId = headers.get("tenantId");
+
+		String json = stringfyJson(payloadObject);
+
+		getChannel().basicPublish(topicName, tenantId != null ? tenantId : "", null, json.getBytes());
+		System.out.println(" [x] Sent '" + json + "'");
 	}
 
 	private static ObjectMapper getObjectMapper() {

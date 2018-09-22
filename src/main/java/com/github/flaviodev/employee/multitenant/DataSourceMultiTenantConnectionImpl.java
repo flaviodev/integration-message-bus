@@ -11,8 +11,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
-import com.github.flaviodev.employee.SpringContext;
-
 @Component
 @DependsOn("springContext")
 public class DataSourceMultiTenantConnectionImpl extends AbstractDataSourceBasedMultiTenantConnectionProviderImpl {
