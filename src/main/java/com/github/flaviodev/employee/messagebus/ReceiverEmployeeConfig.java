@@ -30,13 +30,13 @@ public class ReceiverEmployeeConfig {
 
 	private MessageBusAdmin getMesssagesUpdateEmployeeRouting(String tenantId) {
 		return messageBusAdmin.consumeMessages(MessageSubscription.UPDATE_EMPLOYEE_DEFAULT.getName() + "-" + tenantId,
-				MessageSubscription.UPDATE_EMPLOYEE_DEFAULT.getTopicName() + "-" + tenantId, Employee.class,
+				MessageSubscription.UPDATE_EMPLOYEE_DEFAULT.getTopicName(), tenantId, Employee.class,
 				(headers, employee) -> log.info("Receiving employee on tenant [" + tenantId + "]:" + employee));
 	}
 
 	@Bean
 	public MessageBusAdmin getMesssagesUpdateEmployee() {
-		return messageBusAdmin.consumeMessages(MessageSubscription.UPDATE_EMPLOYEE_DEFAULT, Employee.class,
+		return messageBusAdmin.consumeMessages(MessageSubscription.UPDATE_EMPLOYEE_DEFAULT, null, Employee.class,
 				(headers, employee) -> {
 					String tenantId = headers.get("tenantId");
 
