@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.log4j.Logger;
 import org.springframework.amqp.core.Exchange;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitManagementTemplate;
@@ -20,7 +21,6 @@ import com.github.flaviodev.employee.messagebus.base.MessageTopic;
 import com.google.common.collect.ImmutableMap;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.DefaultConsumer;
@@ -54,8 +54,7 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 		if (channel == null) {
 			ConnectionFactory factory = new ConnectionFactory();
 			factory.setHost("localhost");
-			Connection connection = factory.newConnection();
-			channel = connection.createChannel();
+			channel = factory.newConnection().createChannel();
 		}
 
 		return channel;
@@ -64,7 +63,7 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 	@Override
 	@SneakyThrows
 	public void createTopic(@NonNull String topicName) {
-		getChannel().exchangeDeclare(topicName, "fanout");
+		getChannel().exchangeDeclare(topicName, "direct");
 	}
 
 	@Override
@@ -81,11 +80,15 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 
 	@Override
 	@SneakyThrows
-	public void createSubscription(@NonNull String subscriptionName, @NonNull String topicName, String tentantId) {
-		getChannel().queueDeclare(subscriptionName, true, true, false, null);
-		getChannel().queueBind(subscriptionName, topicName, tentantId!=null ? tentantId :"");
+	public void createSubscription(@NonNull String subscriptionName, @NonNull String topicName, String tenantId) {
+		getChannel().queueDeclare(subscriptionName,true,false,false,null);
+		getChannel().queueBind(subscriptionName, topicName, getRoutingKey(topicName, tenantId));
 	}
 
+	private String getRoutingKey(String topicName, String tenantId) {
+		return tenantId != null ? topicName+"."+tenantId : topicName;
+	}
+	
 	@Override
 	@SneakyThrows
 	public void deleteSubscription(@NonNull String subscriptionName) {
@@ -117,10 +120,10 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 	@Override
 	public void verifySubscription(@NonNull String subscriptionName, @NonNull String topicName, String tentantId) {
 
-		if (!isRegistredTopic(topicName))
+		if(!isRegistredTopic(topicName))
 			createTopic(topicName);
-
-		if (!isRegistredSubscription(subscriptionName))
+		
+		if(!isRegistredSubscription(subscriptionName))
 			createSubscription(subscriptionName, topicName, tentantId);
 	}
 
@@ -135,20 +138,20 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 	public <T> MessageBusAdmin consumeMessages(@NonNull String subscriptionName, @NonNull String topicName,
 			String tenantId, @NonNull Class<T> payloadType, @NonNull ActionOnConsumeMessage<T> action) {
 
-		System.out.println("-------------------->"+subscriptionName);
-		
 		verifySubscription(subscriptionName, topicName, tenantId);
 
 		Consumer consumer = new DefaultConsumer(getChannel()) {
 			@Override
 			public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
 					byte[] body) throws IOException {
+				Logger logger = Logger.getLogger(DefaultConsumer.class);
+
 				String message = new String(body, "UTF-8");
-				System.out.println(" [x] Received '" + message + "'");
+				logger.info(" [x] Received '" + message + "'");
 				action.apply(ImmutableMap.of(), parseJson(payloadType, body));
 			}
 		};
-		channel.basicConsume(subscriptionName, true, consumer);
+		getChannel().basicConsume(subscriptionName, true, consumer);
 		return this;
 	}
 
@@ -166,11 +169,11 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 			headers = ImmutableMap.of();
 
 		String tenantId = headers.get("tenantId");
-
+		
 		String json = stringfyJson(payloadObject);
 
-		getChannel().basicPublish(topicName, tenantId != null ? tenantId : "", null, json.getBytes());
-		System.out.println(" [x] Sent '" + json + "'");
+		getChannel().basicPublish(topicName, getRoutingKey(topicName, tenantId), null, json.getBytes());
+		log.info(" [x] Sent to ("+topicName+"/"+getRoutingKey(topicName, tenantId)+") '" + json + "'");
 	}
 
 	private static ObjectMapper getObjectMapper() {
