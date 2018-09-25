@@ -25,27 +25,41 @@ public class MessageBusTest {
 	@Test
 	public void shouldCreateAndDeleteTopic() {
 		MessageBusAdmin messageBusAdmin = SpringContext.getBean(MessageBusAdmin.class);
-		messageBusAdmin.createTopic("employee");
+
+		if (!messageBusAdmin.isRegistredTopic("employee"))
+			messageBusAdmin.createTopic("employee");
+
+		await().until(() -> messageBusAdmin.isRegistredTopic("employee"));
 
 		assertTrue("should return the created topic", messageBusAdmin.isRegistredTopic("employee"));
 
 		messageBusAdmin.deleteTopic("employee");
 
-		assertFalse("should not return the created topic", messageBusAdmin.isRegistredTopic("employee"));
+		await().until(() -> !messageBusAdmin.isRegistredTopic("employee"));
 
+		assertFalse("should not return the created topic", messageBusAdmin.isRegistredTopic("employee"));
 	}
 
 	@Test
 	public void shouldCreateAndDeleteSubscription() {
 		MessageBusAdmin messageBusAdmin = SpringContext.getBean(MessageBusAdmin.class);
 
-		messageBusAdmin.createTopic("employee2");
-		messageBusAdmin.createSubscription("employee-receive2", "employee2", null);
+		if (!messageBusAdmin.isRegistredTopic("employee2"))
+			messageBusAdmin.createTopic("employee2");
+
+		await().until(() -> messageBusAdmin.isRegistredTopic("employee2"));
+
+		if (!messageBusAdmin.isRegistredSubscription("employee-receive2"))
+			messageBusAdmin.createSubscription("employee-receive2", "employee2", null);
+
+		await().until(() -> messageBusAdmin.isRegistredSubscription("employee-receive2"));
 
 		assertTrue("should return the created subscription",
 				messageBusAdmin.isRegistredSubscription("employee-receive2"));
 
 		messageBusAdmin.deleteSubscription("employee-receive2");
+
+		await().until(() -> !messageBusAdmin.isRegistredSubscription("employee-receive2"));
 
 		assertFalse("should not return the created subscription",
 				messageBusAdmin.isRegistredSubscription("employee-receive2"));
@@ -56,8 +70,16 @@ public class MessageBusTest {
 	@Test
 	public void shouldSendAndReceiveMessage() {
 		MessageBusAdmin messageBusAdmin = SpringContext.getBean(MessageBusAdmin.class);
-		messageBusAdmin.createTopic("employee3");
-		messageBusAdmin.createSubscription("employee-receive3", "employee3", null);
+
+		if (!messageBusAdmin.isRegistredTopic("employee3"))
+			messageBusAdmin.createTopic("employee3");
+
+		await().until(() -> messageBusAdmin.isRegistredTopic("employee3"));
+
+		if (!messageBusAdmin.isRegistredSubscription("employee-receive3"))
+			messageBusAdmin.createSubscription("employee-receive3", "employee3", null);
+
+		await().until(() -> messageBusAdmin.isRegistredSubscription("employee-receive3"));
 
 		final Employee employeeReturned = new Employee();
 
@@ -74,5 +96,4 @@ public class MessageBusTest {
 
 		assertEquals("Flavio", employeeReturned.getName());
 	}
-
 }
