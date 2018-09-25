@@ -11,7 +11,6 @@ import com.google.common.collect.ImmutableMap;
 
 import lombok.extern.log4j.Log4j;
 
-
 @Log4j
 @Configuration
 public class ReceiverEmployeeConfig {
@@ -30,8 +29,8 @@ public class ReceiverEmployeeConfig {
 	}
 
 	private MessageBusAdmin getMesssagesUpdateEmployeeRouting(String tenantId) {
-		return messageBusAdmin.consumeMessages(MessageSubscription.UPDATE_EMPLOYEE_DEFAULT.getName(), tenantId,
-				MessageSubscription.UPDATE_EMPLOYEE_DEFAULT.getTopicName(), Employee.class,
+		return messageBusAdmin.consumeMessages(MessageSubscription.UPDATE_EMPLOYEE_DEFAULT.getName() + "-" + tenantId,
+				MessageSubscription.UPDATE_EMPLOYEE_DEFAULT.getTopicName(), tenantId, Employee.class,
 				(headers, employee) -> log.info("Receiving employee on tenant [" + tenantId + "]:" + employee));
 	}
 
