@@ -29,7 +29,7 @@ public class ReceiverEmployeeConfig {
 	}
 
 	private MessageBusAdmin getMesssagesUpdateEmployeeRouting(String tenantId) {
-		return messageBusAdmin.consumeMessages(MessageSubscription.UPDATE_EMPLOYEE_DEFAULT.getName(),
+		return messageBusAdmin.consumeMessages(MessageSubscription.UPDATE_EMPLOYEE_DEFAULT.getName() + "-" + tenantId,
 				MessageSubscription.UPDATE_EMPLOYEE_DEFAULT.getTopicName(), tenantId, Employee.class,
 				(headers, employee) -> log.info("Receiving employee on tenant [" + tenantId + "]:" + employee));
 	}
