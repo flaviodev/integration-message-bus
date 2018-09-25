@@ -4,7 +4,7 @@
 
 	<groupId>com.github.flaviodev</groupId>
 	<artifactId>integration-message-bus</artifactId>
-	<version>1.0.1-PUBSUB</version>
+	<version>1.0.2-PUBSUB</version>
 	<packaging>jar</packaging>
 
 	<name>integration-message-bus</name>
