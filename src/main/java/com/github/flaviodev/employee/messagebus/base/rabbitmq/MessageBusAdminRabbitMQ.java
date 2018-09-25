@@ -81,14 +81,14 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 	@Override
 	@SneakyThrows
 	public void createSubscription(@NonNull String subscriptionName, @NonNull String topicName, String tenantId) {
-		getChannel().queueDeclare(subscriptionName,true,false,false,null);
+		getChannel().queueDeclare(subscriptionName, true, false, false, null);
 		getChannel().queueBind(subscriptionName, topicName, getRoutingKey(topicName, tenantId));
 	}
 
 	private String getRoutingKey(String topicName, String tenantId) {
-		return tenantId != null ? topicName+"."+tenantId : topicName;
+		return tenantId != null ? topicName + "." + tenantId : topicName;
 	}
-	
+
 	@Override
 	@SneakyThrows
 	public void deleteSubscription(@NonNull String subscriptionName) {
@@ -120,10 +120,10 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 	@Override
 	public void verifySubscription(@NonNull String subscriptionName, @NonNull String topicName, String tentantId) {
 
-		if(!isRegistredTopic(topicName))
+		if (!isRegistredTopic(topicName))
 			createTopic(topicName);
-		
-		if(!isRegistredSubscription(subscriptionName))
+
+		if (!isRegistredSubscription(subscriptionName))
 			createSubscription(subscriptionName, topicName, tentantId);
 	}
 
@@ -147,7 +147,7 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 				Logger logger = Logger.getLogger(DefaultConsumer.class);
 
 				String message = new String(body, "UTF-8");
-				logger.info(" [x] Received '" + message + "'");
+				logger.info("consuming message [" + subscriptionName + "]: " + message);
 				action.apply(ImmutableMap.of(), parseJson(payloadType, body));
 			}
 		};
@@ -169,11 +169,11 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 			headers = ImmutableMap.of();
 
 		String tenantId = headers.get("tenantId");
-		
+
 		String json = stringfyJson(payloadObject);
 
 		getChannel().basicPublish(topicName, getRoutingKey(topicName, tenantId), null, json.getBytes());
-		log.info(" [x] Sent to ("+topicName+"/"+getRoutingKey(topicName, tenantId)+") '" + json + "'");
+		log.info("Sending message [" + getRoutingKey(topicName, tenantId) + "]: " + json);
 	}
 
 	private static ObjectMapper getObjectMapper() {
