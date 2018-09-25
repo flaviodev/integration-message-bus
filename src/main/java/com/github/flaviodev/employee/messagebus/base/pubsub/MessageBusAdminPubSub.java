@@ -52,8 +52,8 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 	}
 
 	@Override
-	public void criarInscricao(@NonNull String subscriptionName, @NonNull String topicName) {
-		pubSubAdmin.createSubscription(subscriptionName, topicName);
+	public void createSubscription(@NonNull String subscriptionName, @NonNull String topicName, String tenantId) {
+		pubSubAdmin.createSubscription(concatTenant(subscriptionName, tenantId), concatTenant(topicName, tenantId));
 	}
 
 	@Override
@@ -66,6 +66,10 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 		return pubSubAdmin.listSubscriptions().stream().map(Subscription::getName).collect(Collectors.toList());
 	}
 
+	private String concatTenant(@NonNull String topicSubscriptionName, String tenantId) {
+		return  topicSubscriptionName + (tenantId != null ? "-" + tenantId : "");
+	}
+	
 	@Bean
 	@Primary
 	@Override
@@ -75,35 +79,35 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 
 	@Override
 	public boolean isRegistredTopic(@NonNull String topicName) {
-		return listTopics().stream().filter(topico -> topico.endsWith(topicName)).count() > 0;
+		return listTopics().stream().filter(topico -> topico.endsWith("topics/"+topicName)).count() > 0;
 	}
 
 	@Override
 	public boolean isRegistredSubscription(@NonNull String subscriptionName) {
-		return listSubscriptions().stream().filter(inscricao -> inscricao.endsWith(subscriptionName)).count() > 0;
+		return listSubscriptions().stream().filter(inscricao -> inscricao.endsWith("subscriptions/"+subscriptionName)).count() > 0;
 	}
 
 	@Override
-	public void verifySubscription(@NonNull String subscriptionName, @NonNull String topicName) {
+	public void verifySubscription(@NonNull String subscriptionName, @NonNull String topicName, String tenantId) {
 
-		if (!isRegistredTopic(topicName))
-			createTopic(topicName);
+		if (!isRegistredTopic(concatTenant(topicName, tenantId)))
+			createTopic(concatTenant(topicName, tenantId));
 
-		if (!isRegistredSubscription(subscriptionName))
-			criarInscricao(subscriptionName, topicName);
+		if (!isRegistredSubscription(concatTenant(subscriptionName, tenantId)))
+			createSubscription(subscriptionName, topicName, tenantId);
 	}
 
 	@Override
-	public <T> MessageBusAdmin consumeMessages(@NonNull MessageSubscription subscription, @NonNull Class<T> payloadType,
+	public <T> MessageBusAdmin consumeMessages(@NonNull MessageSubscription subscription, String tenantId, @NonNull Class<T> payloadType,
 			@NonNull ActionOnConsumeMessage<T> action) {
-		return consumeMessages(subscription.getName(), subscription.getTopicName(), payloadType, action);
+		return consumeMessages(subscription.getName(), subscription.getTopicName(), tenantId, payloadType, action);
 	}
 
 	@Override
-	public <T> MessageBusAdmin consumeMessages(@NonNull String subscriptionName, @NonNull String topicName,
+	public <T> MessageBusAdmin consumeMessages(@NonNull String subscriptionName, @NonNull String topicName, String tenantId,
 			@NonNull Class<T> payloadType, @NonNull ActionOnConsumeMessage<T> action) {
 
-		verifySubscription(subscriptionName, topicName);
+		verifySubscription(subscriptionName, topicName, tenantId);
 
 		pubSubTemplate.subscribe(subscriptionName, (message, consumer) -> {
 			log.info("consuming message [" + subscriptionName + "]: " + message.getData().toStringUtf8());
