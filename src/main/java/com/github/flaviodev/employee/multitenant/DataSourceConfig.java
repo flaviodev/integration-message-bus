@@ -33,7 +33,7 @@ public @Getter @Setter class DataSourceConfig extends EntityBase<String> {
 	private String id;
 
 	private String name;
-	
+
 	private String driverClassName;
 
 }

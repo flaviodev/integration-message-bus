@@ -1,4 +1,5 @@
 package com.github.flaviodev.employee.multitenant;
+
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,22 +11,23 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class DataSourceConfigRepositoryImpl implements DataSourceConfigRepository {
 
-  @Autowired
-  private JdbcTemplate jdbcTemplate;
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
 
-  @Override
-  public DataSourceConfig findByName(String name) {
-    try {
-      return jdbcTemplate.queryForObject("select datasourceid, driverclassname, url, name from datasourceconfig where name = ?",
-          new Object[] {name}, new BeanPropertyRowMapper<DataSourceConfig>(DataSourceConfig.class));
-    } catch (EmptyResultDataAccessException e) {
-      return null;
-    }
-  }
+	@Override
+	public DataSourceConfig findByName(String name) {
+		try {
+			return jdbcTemplate.queryForObject(
+					"select datasourceid, driverclassname, url, name from datasourceconfig where name = ?",
+					new Object[] { name }, new BeanPropertyRowMapper<DataSourceConfig>(DataSourceConfig.class));
+		} catch (EmptyResultDataAccessException e) {
+			return null;
+		}
+	}
 
-  @Override
-  public List<DataSourceConfig> findAll() {
-    return jdbcTemplate.query("select datasourceid, driverclassname, url, name from datasourceconfig",
-        new BeanPropertyRowMapper<DataSourceConfig>(DataSourceConfig.class));
-  }
+	@Override
+	public List<DataSourceConfig> findAll() {
+		return jdbcTemplate.query("select datasourceid, driverclassname, url, name from datasourceconfig",
+				new BeanPropertyRowMapper<DataSourceConfig>(DataSourceConfig.class));
+	}
 }

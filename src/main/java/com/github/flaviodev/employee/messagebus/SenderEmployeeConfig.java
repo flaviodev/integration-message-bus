@@ -17,7 +17,8 @@ public class SenderEmployeeConfig {
 
 	@Bean
 	public SenderEmployee getSenderSenderEmployee() {
-		return employee -> messageBusAdmin.sendMessage(MessageTopic.UPDATE_EMPLOYEE, Employee.class, employee, ImmutableMap.of());
+		return employee -> messageBusAdmin.sendMessage(MessageTopic.UPDATE_EMPLOYEE, Employee.class, employee,
+				ImmutableMap.of());
 	}
 
 	@Bean
