@@ -38,12 +38,14 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 
 	@Override
 	public void createTopic(@NonNull String topicName) {
-		pubSubAdmin.createTopic(topicName);
+		if (!isRegistredTopic(topicName))
+			pubSubAdmin.createTopic(topicName);
 	}
 
 	@Override
 	public void deleteTopic(@NonNull String topicName) {
-		pubSubAdmin.deleteTopic(topicName);
+		if (isRegistredTopic(topicName))
+			pubSubAdmin.deleteTopic(topicName);
 	}
 
 	@Override
@@ -52,13 +54,17 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 	}
 
 	@Override
-	public void createSubscription(@NonNull String subscriptionName, @NonNull String topicName, String tenantId) {
-		pubSubAdmin.createSubscription(concatTenant(subscriptionName, tenantId), concatTenant(topicName, tenantId));
+	public void createSubscription(@NonNull String subscriptionName, @NonNull String topicName) {
+		createTopic(topicName);
+
+		if (!isRegistredSubscription(subscriptionName))
+			pubSubAdmin.createSubscription(subscriptionName, topicName);
 	}
 
 	@Override
 	public void deleteSubscription(@NonNull String subscriptionName) {
-		pubSubAdmin.deleteSubscription(subscriptionName);
+		if (isRegistredSubscription(subscriptionName))
+			pubSubAdmin.deleteSubscription(subscriptionName);
 	}
 
 	@Override
@@ -66,10 +72,6 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 		return pubSubAdmin.listSubscriptions().stream().map(Subscription::getName).collect(Collectors.toList());
 	}
 
-	private String concatTenant(@NonNull String topicSubscriptionName, String tenantId) {
-		return  topicSubscriptionName + (tenantId != null ? "-" + tenantId : "");
-	}
-	
 	@Bean
 	@Primary
 	@Override
@@ -79,35 +81,26 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 
 	@Override
 	public boolean isRegistredTopic(@NonNull String topicName) {
-		return listTopics().stream().filter(topico -> topico.endsWith("topics/"+topicName)).count() > 0;
+		return listTopics().stream().filter(topico -> topico.endsWith("topics/" + topicName)).count() > 0;
 	}
 
 	@Override
 	public boolean isRegistredSubscription(@NonNull String subscriptionName) {
-		return listSubscriptions().stream().filter(inscricao -> inscricao.endsWith("subscriptions/"+subscriptionName)).count() > 0;
+		return listSubscriptions().stream().filter(inscricao -> inscricao.endsWith("subscriptions/" + subscriptionName))
+				.count() > 0;
 	}
 
 	@Override
-	public void verifySubscription(@NonNull String subscriptionName, @NonNull String topicName, String tenantId) {
-
-		if (!isRegistredTopic(concatTenant(topicName, tenantId)))
-			createTopic(concatTenant(topicName, tenantId));
-
-		if (!isRegistredSubscription(concatTenant(subscriptionName, tenantId)))
-			createSubscription(subscriptionName, topicName, tenantId);
-	}
-
-	@Override
-	public <T> MessageBusAdmin consumeMessages(@NonNull MessageSubscription subscription, String tenantId, @NonNull Class<T> payloadType,
+	public <T> MessageBusAdmin consumeMessages(@NonNull MessageSubscription subscription, @NonNull Class<T> payloadType,
 			@NonNull ActionOnConsumeMessage<T> action) {
-		return consumeMessages(subscription.getName(), subscription.getTopicName(), tenantId, payloadType, action);
+		return consumeMessages(subscription.getName(), subscription.getTopicName(), payloadType, action);
 	}
 
 	@Override
-	public <T> MessageBusAdmin consumeMessages(@NonNull String subscriptionName, @NonNull String topicName, String tenantId,
+	public <T> MessageBusAdmin consumeMessages(@NonNull String subscriptionName, @NonNull String topicName,
 			@NonNull Class<T> payloadType, @NonNull ActionOnConsumeMessage<T> action) {
 
-		verifySubscription(subscriptionName, topicName, tenantId);
+		createSubscription(subscriptionName, topicName);
 
 		pubSubTemplate.subscribe(subscriptionName, (message, consumer) -> {
 			log.info("consuming message [" + subscriptionName + "]: " + message.getData().toStringUtf8());
@@ -131,6 +124,8 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 			ImmutableMap<String, String> headers) {
 		if (headers == null)
 			headers = ImmutableMap.of();
+
+		createTopic(topicName);
 
 		String json = stringfyJson(payloadObject);
 		log.info("Sending message [" + topicName + "]: " + json);

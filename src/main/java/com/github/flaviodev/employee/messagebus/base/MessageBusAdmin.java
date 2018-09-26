@@ -12,7 +12,7 @@ public interface MessageBusAdmin {
 
 	List<String> listTopics();
 
-	void createSubscription(String subscriptionName, String topicName, String tentantId);
+	void createSubscription(String subscriptionName, String topicName);
 
 	void deleteSubscription(String subscriptionName);
 
@@ -22,14 +22,12 @@ public interface MessageBusAdmin {
 
 	boolean isRegistredSubscription(String subscriptionName);
 
-	void verifySubscription(String subscriptionName, String topicName, String tentantId);
-
 	MessageBusAdmin messageBusAdmin();
 
-	<T> MessageBusAdmin consumeMessages(String subscriptionName, String topicName, String tentantId, Class<T> payloadType,
+	<T> MessageBusAdmin consumeMessages(String subscriptionName, String topicName, Class<T> payloadType,
 			ActionOnConsumeMessage<T> action);
 
-	<T> MessageBusAdmin consumeMessages(MessageSubscription subscription, String tentantId, Class<T> payloadType,
+	<T> MessageBusAdmin consumeMessages(MessageSubscription subscription, Class<T> payloadType,
 			ActionOnConsumeMessage<T> action);
 
 	<T> void sendMessage(String topicName, Class<T> payloadType, T payloadObject, ImmutableMap<String, String> headers);
