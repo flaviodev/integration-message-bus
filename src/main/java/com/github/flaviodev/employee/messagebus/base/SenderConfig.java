@@ -1,11 +1,10 @@
 package com.github.flaviodev.employee.messagebus.base;
 
-public interface Receiver {
-	String getSubscriptionName();
+public interface SenderConfig<T> {
 
 	String getTopicName();
 
-	Receiver consumeMessage();
+	T sendMessage();
 
 	MessageBusAdmin getMessageBusAdmin();
 }

@@ -11,7 +11,7 @@ import com.github.flaviodev.employee.model.Employee;
 import com.google.common.collect.ImmutableMap;
 
 @Configuration
-public class SenderEmployeeConfig implements SenderConfig<SenderEmployee> {
+public class SenderEmployeeRoutingConfig implements SenderConfig<SenderEmployeeRouting> {
 
 	@Autowired
 	private MessageBusAdmin messageBusAdmin;
@@ -26,10 +26,10 @@ public class SenderEmployeeConfig implements SenderConfig<SenderEmployee> {
 		return MessageTopic.UPDATE_EMPLOYEE.getName();
 	}
 
-	@Bean("senderEmployee")
+	@Bean("senderEmployeeRouting")
 	@Override
-	public SenderEmployee sendMessage() {
-		return employee -> getMessageBusAdmin().sendMessage(getTopicName(), Employee.class, employee,
-				ImmutableMap.of());
+	public SenderEmployeeRouting sendMessage() {
+		return (tenantId, employee) -> getMessageBusAdmin().sendMessage(getTopicName(), Employee.class, employee,
+				ImmutableMap.of("tenantId", tenantId));
 	}
 }

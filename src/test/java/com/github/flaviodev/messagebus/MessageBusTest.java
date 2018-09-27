@@ -18,7 +18,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.github.flaviodev.employee.IntegrationMessageBusApplication;
 import com.github.flaviodev.employee.SpringContext;
-import com.github.flaviodev.employee.messagebus.EmployeeUpdateReceiverRedirect;
+import com.github.flaviodev.employee.messagebus.EmployeeUpdateReceiverRedirectConfig;
 import com.github.flaviodev.employee.messagebus.base.MessageBusAdmin;
 import com.github.flaviodev.employee.model.Employee;
 import com.google.common.collect.ImmutableMap;
@@ -35,7 +35,7 @@ public class MessageBusTest {
 	private static final String SUBSCRIPTION_REDIRECT = SUBSCRIPTION + "-" + TENANT_ID;
 
 	@MockBean
-	private EmployeeUpdateReceiverRedirect employeeUpdateReceiverRedirect;
+	private EmployeeUpdateReceiverRedirectConfig employeeUpdateReceiverRedirect;
 
 	@Autowired
 	MessageBusAdmin messageBusAdmin;
@@ -78,10 +78,10 @@ public class MessageBusTest {
 
 	private void creatingSubscriptions() {
 
-		messageBusAdmin.createSubscription(SUBSCRIPTION, TOPIC);
+		messageBusAdmin.createSubscriptionForTopic(SUBSCRIPTION, TOPIC);
 		await().until(() -> messageBusAdmin.isRegistredSubscription(SUBSCRIPTION));
 
-		messageBusAdmin.createSubscription(SUBSCRIPTION_REDIRECT, TOPIC_REDIRECT);
+		messageBusAdmin.createSubscriptionForTopic(SUBSCRIPTION_REDIRECT, TOPIC_REDIRECT);
 		await().until(() -> messageBusAdmin.isRegistredSubscription(SUBSCRIPTION_REDIRECT));
 	}
 
@@ -121,7 +121,7 @@ public class MessageBusTest {
 	public void shouldCreateAndDeleteSubscription() {
 		MessageBusAdmin messageBusAdmin = SpringContext.getBean(MessageBusAdmin.class);
 
-		messageBusAdmin.createSubscription("employee-receive2", "employee2");
+		messageBusAdmin.createSubscriptionForTopic("employee-receive2", "employee2");
 
 		await().until(() -> messageBusAdmin.isRegistredSubscription("employee-receive2"));
 

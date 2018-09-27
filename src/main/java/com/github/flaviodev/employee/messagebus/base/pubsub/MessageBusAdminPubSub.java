@@ -14,8 +14,6 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.flaviodev.employee.messagebus.base.ActionOnConsumeMessage;
 import com.github.flaviodev.employee.messagebus.base.MessageBusAdmin;
-import com.github.flaviodev.employee.messagebus.base.MessageSubscription;
-import com.github.flaviodev.employee.messagebus.base.MessageTopic;
 import com.google.common.collect.ImmutableMap;
 import com.google.pubsub.v1.Subscription;
 import com.google.pubsub.v1.Topic;
@@ -38,14 +36,18 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 
 	@Override
 	public void createTopic(@NonNull String topicName) {
-		if (!isRegistredTopic(topicName))
+		if (!isRegistredTopic(topicName)) {
+			log.info("Creating topic '" + topicName + "'");
 			pubSubAdmin.createTopic(topicName);
+		}
 	}
 
 	@Override
 	public void deleteTopic(@NonNull String topicName) {
-		if (isRegistredTopic(topicName))
+		if (isRegistredTopic(topicName)) {
+			log.info("Deleting topic '" + topicName + "'");
 			pubSubAdmin.deleteTopic(topicName);
+		}
 	}
 
 	@Override
@@ -54,17 +56,21 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 	}
 
 	@Override
-	public void createSubscription(@NonNull String subscriptionName, @NonNull String topicName) {
+	public void createSubscriptionForTopic(@NonNull String subscriptionName, @NonNull String topicName) {
 		createTopic(topicName);
 
-		if (!isRegistredSubscription(subscriptionName))
+		if (!isRegistredSubscription(subscriptionName)) {
+			log.info("Creating subscription '" + subscriptionName + "' for topic '" + topicName + "'");
 			pubSubAdmin.createSubscription(subscriptionName, topicName);
+		}
 	}
 
 	@Override
 	public void deleteSubscription(@NonNull String subscriptionName) {
-		if (isRegistredSubscription(subscriptionName))
+		if (isRegistredSubscription(subscriptionName)) {
+			log.info("Deleting subscription '" + subscriptionName + "'");
 			pubSubAdmin.deleteSubscription(subscriptionName);
+		}
 	}
 
 	@Override
@@ -91,19 +97,14 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 	}
 
 	@Override
-	public <T> MessageBusAdmin consumeMessages(@NonNull MessageSubscription subscription, @NonNull Class<T> payloadType,
-			@NonNull ActionOnConsumeMessage<T> action) {
-		return consumeMessages(subscription.getName(), subscription.getTopicName(), payloadType, action);
-	}
-
-	@Override
 	public <T> MessageBusAdmin consumeMessages(@NonNull String subscriptionName, @NonNull String topicName,
 			@NonNull Class<T> payloadType, @NonNull ActionOnConsumeMessage<T> action) {
 
-		createSubscription(subscriptionName, topicName);
+		createSubscriptionForTopic(subscriptionName, topicName);
 
 		pubSubTemplate.subscribe(subscriptionName, (message, consumer) -> {
-			log.info("consuming message [" + subscriptionName + "]: " + message.getData().toStringUtf8());
+			log.info("Consuming message of the subscription '" + subscriptionName + "' -> "
+					+ message.getData().toStringUtf8());
 			consumer.ack();
 
 			action.apply(ImmutableMap.copyOf(message.getAttributesMap()),
@@ -111,12 +112,6 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 		});
 
 		return this;
-	}
-
-	@Override
-	public <T> void sendMessage(@NonNull MessageTopic topic, @NonNull Class<T> payloadType, @NonNull T payloadObject,
-			ImmutableMap<String, String> headers) {
-		sendMessage(topic.getName(), payloadType, payloadObject, headers);
 	}
 
 	@Override
@@ -128,7 +123,7 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 		createTopic(topicName);
 
 		String json = stringfyJson(payloadObject);
-		log.info("Sending message [" + topicName + "]: " + json);
+		log.info("Sending message to topic '" + topicName + "' ->  " + json);
 		pubSubTemplate.publish(topicName, json, headers);
 	}
 
@@ -148,5 +143,4 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 	private String stringfyJson(@NonNull Object payloadObject) {
 		return getObjectMapper().writeValueAsString(payloadObject);
 	}
-
 }

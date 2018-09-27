@@ -6,8 +6,8 @@ import org.springframework.context.annotation.Configuration;
 
 import com.github.flaviodev.employee.messagebus.base.MessageBusAdmin;
 import com.github.flaviodev.employee.messagebus.base.MessageSubscription;
-import com.github.flaviodev.employee.messagebus.base.Receiver;
-import com.github.flaviodev.employee.messagebus.base.ReceiverRedirect;
+import com.github.flaviodev.employee.messagebus.base.ReceiverConfig;
+import com.github.flaviodev.employee.messagebus.base.ReceiverRedirectConfig;
 import com.github.flaviodev.employee.model.Employee;
 import com.google.common.collect.ImmutableMap;
 
@@ -15,7 +15,7 @@ import lombok.extern.log4j.Log4j;
 
 @Log4j
 @Configuration
-public class EmployeeUpdateReceiverRedirect implements ReceiverRedirect {
+public class EmployeeUpdateReceiverRedirectConfig implements ReceiverRedirectConfig {
 
 	@Autowired
 	private MessageBusAdmin messageBusAdmin;
@@ -39,7 +39,7 @@ public class EmployeeUpdateReceiverRedirect implements ReceiverRedirect {
 
 	@Bean("employeeUpdateRedirect")
 	@Override
-	public Receiver consumeMessage() {
+	public ReceiverConfig consumeMessage() {
 		log.info("Loading employee update receiver");
 		getMessageBusAdmin().consumeMessages(getSubscriptionName(), getTopicName(), Employee.class,
 				(headers, employee) -> {
