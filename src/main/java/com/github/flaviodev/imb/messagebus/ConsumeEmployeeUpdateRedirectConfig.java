@@ -42,10 +42,12 @@ public class ConsumeEmployeeUpdateRedirectConfig implements ConsumerConfig {
 	@Override
 	public ConsumerConfig consumeMessage() {
 		log.info("Loading employee update receiver");
-		getMessageBusAdmin().consumeMessages(getSubscriptionName(), getTopicName(), getGroupName(), Employee.class,
+		getMessageBusAdmin().consumeMessages(getSubscriptionName(), getTopicName(), Employee.class,
 				(headers, employee) -> {
-					String routingKey = headers.get("routingKey");
-
+					String routingKey = (String) headers.get("routingKey");
+					log.info("Redirect for: " + routingKey);
+					
+					
 					if (routingKey != null) {
 						createSubscriptionForTopicBasedOnRoutingKey(getSubscriptionName(), getTopicName(), routingKey);
 

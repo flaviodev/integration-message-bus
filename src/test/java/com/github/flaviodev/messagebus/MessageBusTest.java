@@ -11,14 +11,12 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.github.flaviodev.imb.IntegrationMessageBusApplication;
-import com.github.flaviodev.imb.SpringContext;
 import com.github.flaviodev.imb.messagebus.ConsumeEmployeeUpdateRedirectConfig;
 import com.github.flaviodev.imb.messagebus.ConsumeEmployeeUpdateTenant1Config;
 import com.github.flaviodev.imb.messagebus.base.MessageBusAdmin;
@@ -64,7 +62,11 @@ public class MessageBusTest {
 
 		consumeEmployeeUpdateRedirect.consumeMessage();
 
-		await().pollDelay(10, TimeUnit.SECONDS);
+		System.out.println("antes");
+		
+		await().timeout(20, TimeUnit.SECONDS).pollDelay(15, TimeUnit.SECONDS).until(() -> true);
+
+		System.out.println("depois");
 		
 		consumeEmployeeUpdateTenant1.consumeMessage();
 
@@ -92,15 +94,15 @@ public class MessageBusTest {
 	}
 
 	private void creatingSubscriptions() {
-		messageBusAdmin.createSubscriptionForTopic(SUBSCRIPTION_TEST, TOPIC_TEST, null);
-		await().until(() -> messageBusAdmin.isRegistredSubscription(SUBSCRIPTION_TEST, null));
+		messageBusAdmin.createSubscriptionForTopic(SUBSCRIPTION_TEST, TOPIC_TEST);
+		await().until(() -> messageBusAdmin.isRegistredSubscription(SUBSCRIPTION_TEST));
 
 		messageBusAdmin.createSubscriptionForTopic(SUBSCRIPTION_TEST, TOPIC_TEST, GROUP_TENANT1_TEST);
 		await().until(() -> messageBusAdmin.isRegistredSubscription(SUBSCRIPTION_TEST, GROUP_TENANT1_TEST));
 	}
 
 	private void simulatePublicationOnTopic() {
-		messageBusAdmin.publishMessage(TOPIC_TEST, "", Employee.class, new Employee(NAME_EMPLOYEE_TEST),
+		messageBusAdmin.publishMessage(TOPIC_TEST, Employee.class, new Employee(NAME_EMPLOYEE_TEST),
 				ImmutableMap.of("routingKey", GROUP_TENANT1_TEST));
 	}
 
@@ -111,8 +113,8 @@ public class MessageBusTest {
 	}
 
 	private void deletingTopicsAndSubscriptionsCreatedsForTest() {
-		messageBusAdmin.deleteSubscription(SUBSCRIPTION_TEST, null);
-		messageBusAdmin.deleteTopic(TOPIC_TEST, null);
+		messageBusAdmin.deleteSubscription(SUBSCRIPTION_TEST);
+		messageBusAdmin.deleteTopic(TOPIC_TEST);
 
 		messageBusAdmin.deleteSubscription(SUBSCRIPTION_TEST, GROUP_TENANT1_TEST);
 		messageBusAdmin.deleteTopic(TOPIC_TEST, GROUP_TENANT1_TEST);
@@ -121,37 +123,37 @@ public class MessageBusTest {
 	@Test
 	public void shouldCreateAndDeleteTopic() {
 
-		messageBusAdmin.createTopic("employee", null);
+		messageBusAdmin.createTopic("employee");
 
-		await().until(() -> messageBusAdmin.isRegistredTopic("employee", null));
+		await().until(() -> messageBusAdmin.isRegistredTopic("employee"));
 
-		assertTrue("should return the created topic", messageBusAdmin.isRegistredTopic("employee", null));
+		assertTrue("should return the created topic", messageBusAdmin.isRegistredTopic("employee"));
 
-		messageBusAdmin.deleteTopic("employee", null);
+		messageBusAdmin.deleteTopic("employee");
 
-		await().until(() -> !messageBusAdmin.isRegistredTopic("employee", null));
+		await().until(() -> !messageBusAdmin.isRegistredTopic("employee"));
 
-		assertFalse("should not return the created topic", messageBusAdmin.isRegistredTopic("employee", null));
+		assertFalse("should not return the created topic", messageBusAdmin.isRegistredTopic("employee"));
 	}
 
 	@Test
 	public void shouldCreateAndDeleteSubscription() {
 
-		messageBusAdmin.createSubscriptionForTopic("employee-receive2", "employee2", null);
+		messageBusAdmin.createSubscriptionForTopic("employee-receive2", "employee2");
 
-		await().until(() -> messageBusAdmin.isRegistredSubscription("employee-receive2", null));
+		await().until(() -> messageBusAdmin.isRegistredSubscription("employee-receive2"));
 
 		assertTrue("should return the created subscription",
-				messageBusAdmin.isRegistredSubscription("employee-receive2", null));
+				messageBusAdmin.isRegistredSubscription("employee-receive2"));
 
-		messageBusAdmin.deleteSubscription("employee-receive2", null);
+		messageBusAdmin.deleteSubscription("employee-receive2");
 
-		await().until(() -> !messageBusAdmin.isRegistredSubscription("employee-receive2", null));
+		await().until(() -> !messageBusAdmin.isRegistredSubscription("employee-receive2"));
 
 		assertFalse("should not return the created subscription",
-				messageBusAdmin.isRegistredSubscription("employee-receive2", null));
+				messageBusAdmin.isRegistredSubscription("employee-receive2"));
 
-		messageBusAdmin.deleteTopic("employee2", null);
+		messageBusAdmin.deleteTopic("employee2");
 	}
 
 }

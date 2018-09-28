@@ -1,7 +1,10 @@
 package com.github.flaviodev.imb.messagebus.base.rabbitmq;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.springframework.amqp.core.Exchange;
@@ -64,8 +67,13 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 
 	@Override
 	@SneakyThrows
-	public void createTopic(@NonNull String topicName, String groupName) {
+	public void createTopic(@NonNull String topicName) {
+		createTopic(topicName, "");
+	}
 
+	@Override
+	@SneakyThrows
+	public void createTopic(@NonNull String topicName, @NonNull String groupName) {
 		if (!isRegistredTopic(topicName, groupName)) {
 			log.info("Creating topic '" + topicName + "'");
 			getChannel().exchangeDeclare(topicName, "direct");
@@ -74,7 +82,13 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 
 	@Override
 	@SneakyThrows
-	public void deleteTopic(@NonNull String topicName, String groupName) {
+	public void deleteTopic(@NonNull String topicName) {
+		deleteTopic(topicName, "");
+	}
+
+	@Override
+	@SneakyThrows
+	public void deleteTopic(@NonNull String topicName, @NonNull String groupName) {
 		if (isRegistredTopic(topicName, groupName)) {
 			log.info("Deleting topic '" + topicName + "'");
 			getChannel().exchangeDelete(topicName);
@@ -82,7 +96,12 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 	}
 
 	@Override
-	public boolean isRegistredTopic(@NonNull String topicName, String groupName) {
+	public boolean isRegistredTopic(@NonNull String topicName) {
+		return isRegistredTopic(topicName, "");
+	}
+
+	@Override
+	public boolean isRegistredTopic(@NonNull String topicName, @NonNull String groupName) {
 		return listTopics().stream().filter(topic -> topic.equals(topicName)).count() > 0;
 	}
 
@@ -92,8 +111,8 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 				.collect(Collectors.toList());
 	}
 
-	private String getSubscriptionNameWithGroupName(@NonNull String subscripionName, String groupName) {
-		if (groupName != null && !groupName.isEmpty())
+	private String getSubscriptionNameWithGroupName(@NonNull String subscripionName, @NonNull String groupName) {
+		if (!groupName.isEmpty())
 			subscripionName = subscripionName + "-" + groupName;
 
 		return subscripionName;
@@ -101,18 +120,21 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 
 	@Override
 	@SneakyThrows
+	public void createSubscriptionForTopic(@NonNull String subscriptionName, @NonNull String topicName) {
+		createSubscriptionForTopic(subscriptionName, topicName, "");
+	}
+
+	@Override
+	@SneakyThrows
 	public void createSubscriptionForTopic(@NonNull String subscriptionName, @NonNull String topicName,
-			String groupName) {
+			@NonNull String groupName) {
 		createTopic(topicName, groupName);
-		
-		if(groupName ==null)
-			groupName = "";
 
 		if (!isRegistredSubscription(subscriptionName, groupName)) {
 			String subscriptionNameWithGroupName = getSubscriptionNameWithGroupName(subscriptionName, groupName);
 
 			log.info("Creating subscription '" + subscriptionNameWithGroupName + "' for topic '" + topicName + "'"
-					+ (groupName != null && !groupName.isEmpty() ? "' with reoutingKey '" + groupName + "'" : ""));
+					+ (!groupName.isEmpty() ? "' with reoutingKey '" + groupName + "'" : ""));
 			getChannel().queueDeclare(subscriptionNameWithGroupName, true, false, false, null);
 			getChannel().queueBind(subscriptionNameWithGroupName, topicName, groupName);
 		}
@@ -120,7 +142,13 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 
 	@Override
 	@SneakyThrows
-	public void deleteSubscription(@NonNull String subscriptionName, String groupName) {
+	public void deleteSubscription(@NonNull String subscriptionName) {
+		deleteSubscription(subscriptionName, "");
+	}
+
+	@Override
+	@SneakyThrows
+	public void deleteSubscription(@NonNull String subscriptionName, @NonNull String groupName) {
 		if (isRegistredSubscription(subscriptionName, groupName)) {
 			String subscriptionNameWithGroupName = getSubscriptionNameWithGroupName(subscriptionName, groupName);
 
@@ -135,7 +163,12 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 	}
 
 	@Override
-	public boolean isRegistredSubscription(@NonNull String subscriptionName, String groupName) {
+	public boolean isRegistredSubscription(@NonNull String subscriptionName) {
+		return isRegistredSubscription(subscriptionName, "");
+	}
+
+	@Override
+	public boolean isRegistredSubscription(@NonNull String subscriptionName, @NonNull String groupName) {
 		String subscriptionNameWithGroupName = getSubscriptionNameWithGroupName(subscriptionName, groupName);
 
 		return listSubscriptions().stream().filter(subscription -> subscription.equals(subscriptionNameWithGroupName))
@@ -145,7 +178,16 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 	@Override
 	@SneakyThrows
 	public <T> MessageBusAdmin consumeMessages(@NonNull String subscriptionName, @NonNull String topicName,
-			String groupName, @NonNull Class<T> payloadType, @NonNull ActionOnConsumeMessage<T> action) {
+			@NonNull Class<T> payloadType, @NonNull ActionOnConsumeMessage<T> action) {
+
+		return consumeMessages(subscriptionName, topicName, "", payloadType, action);
+
+	}
+
+	@Override
+	@SneakyThrows
+	public <T> MessageBusAdmin consumeMessages(@NonNull String subscriptionName, @NonNull String topicName,
+			@NonNull String groupName, @NonNull Class<T> payloadType, @NonNull ActionOnConsumeMessage<T> action) {
 
 		createSubscriptionForTopic(subscriptionName, topicName, groupName);
 
@@ -159,7 +201,8 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 				String message = new String(body, "UTF-8");
 
 				log.info("Consuming message of the subscription '" + subscriptionNameWithGroupName + "' -> " + message);
-				action.apply(ImmutableMap.of(), parseJson(payloadType, body));
+
+				action.apply(ImmutableMap.copyOf(properties.getHeaders()), parseJson(payloadType, body));
 			}
 		};
 		getChannel().basicConsume(subscriptionNameWithGroupName, true, consumer);
@@ -168,17 +211,33 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 
 	@Override
 	@SneakyThrows
-	public <T> void publishMessage(@NonNull String topicName, String groupName, @NonNull Class<T> payloadType,
-			@NonNull T payloadObject, ImmutableMap<String, String> headers) {
+	public <T> void publishMessage(@NonNull String topicName, @NonNull Class<T> payloadType, @NonNull T payloadObject,
+			ImmutableMap<String, Object> headers) {
+		publishMessage(topicName, "", payloadType, payloadObject, headers);
+	}
+
+	@Override
+	@SneakyThrows
+	public <T> void publishMessage(@NonNull String topicName, @NonNull String groupName, @NonNull Class<T> payloadType,
+			@NonNull T payloadObject, ImmutableMap<String, Object> headers) {
 		createTopic(topicName, groupName);
 
 		String json = stringfyJson(payloadObject);
 
-		getChannel().basicPublish(topicName, groupName!=null ? groupName : "", null, json.getBytes());
+
+		Map<String, Object> headerMap = new HashMap<>();
+		
+		if (headers != null) {
+			for (Entry<String, Object> entry : headers.entrySet()) {
+				headerMap.put(entry.getKey(), entry.getValue());
+			}
+		}
+		AMQP.BasicProperties basicProperties = new AMQP.BasicProperties().builder().headers(headerMap).build();
+
+		getChannel().basicPublish(topicName, groupName, basicProperties, json.getBytes());
 
 		log.info("Sending message to topic '" + topicName
-				+ (groupName != null && !groupName.isEmpty() ? "' with reoutingKey '" + groupName + "'" : "") + " ->  "
-				+ json);
+				+ (!groupName.isEmpty() ? "' with reoutingKey '" + groupName + "'" : "") + " ->  " + json);
 	}
 
 	private static ObjectMapper getObjectMapper() {

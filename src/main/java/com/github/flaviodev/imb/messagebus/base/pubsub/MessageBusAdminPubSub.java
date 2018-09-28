@@ -1,13 +1,15 @@
 package com.github.flaviodev.imb.messagebus.base.pubsub;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gcp.pubsub.PubSubAdmin;
 import org.springframework.cloud.gcp.pubsub.core.PubSubTemplate;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,7 +24,7 @@ import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j;
 
 @Log4j
-//@Configuration
+// @Configuration
 public class MessageBusAdminPubSub implements MessageBusAdmin {
 
 	private static ObjectMapper mapper;
@@ -39,15 +41,20 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 		return this;
 	}
 
-	private String getTopicNameWithGroupName(@NonNull String topicName, String groupName) {
-		if (groupName != null && !groupName.isEmpty())
+	private String getTopicNameWithGroupName(@NonNull String topicName, @NonNull String groupName) {
+		if (!groupName.isEmpty())
 			topicName = topicName + "-" + groupName;
 
 		return topicName;
 	}
 
 	@Override
-	public void createTopic(@NonNull String topicName, String groupName) {
+	public void createTopic(@NonNull String topicName) {
+		createTopic(topicName, "");
+	}
+
+	@Override
+	public void createTopic(@NonNull String topicName, @NonNull String groupName) {
 		if (!isRegistredTopic(topicName, groupName)) {
 			String topicNameWithGroupName = getTopicNameWithGroupName(topicName, groupName);
 
@@ -57,7 +64,12 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 	}
 
 	@Override
-	public void deleteTopic(@NonNull String topicName, String groupName) {
+	public void deleteTopic(@NonNull String topicName) {
+		deleteTopic(topicName, "");
+	}
+
+	@Override
+	public void deleteTopic(@NonNull String topicName, @NonNull String groupName) {
 		if (isRegistredTopic(topicName, groupName)) {
 			String topicNameWithGroupName = getTopicNameWithGroupName(topicName, groupName);
 
@@ -67,7 +79,12 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 	}
 
 	@Override
-	public boolean isRegistredTopic(@NonNull String topicName, String groupName) {
+	public boolean isRegistredTopic(@NonNull String topicName) {
+		return isRegistredTopic(topicName, "");
+	}
+
+	@Override
+	public boolean isRegistredTopic(@NonNull String topicName, @NonNull String groupName) {
 		String topicNameWithGroupName = getTopicNameWithGroupName(topicName, groupName);
 
 		return listTopics().stream().filter(topic -> topic.endsWith("topics/" + topicNameWithGroupName)).count() > 0;
@@ -78,16 +95,21 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 		return pubSubAdmin.listTopics().stream().map(Topic::getName).collect(Collectors.toList());
 	}
 
-	private String getSubscriptionNameWithGroupName(@NonNull String subscripionName, String groupName) {
-		if (groupName != null && !groupName.isEmpty())
+	private String getSubscriptionNameWithGroupName(@NonNull String subscripionName, @NonNull String groupName) {
+		if (!groupName.isEmpty())
 			subscripionName = subscripionName + "-" + groupName;
 
 		return subscripionName;
 	}
 
 	@Override
+	public void createSubscriptionForTopic(@NonNull String subscriptionName, @NonNull String topicName) {
+		createSubscriptionForTopic(subscriptionName, topicName, "");
+	}
+
+	@Override
 	public void createSubscriptionForTopic(@NonNull String subscriptionName, @NonNull String topicName,
-			String groupName) {
+			@NonNull String groupName) {
 		createTopic(topicName, groupName);
 
 		if (!isRegistredSubscription(subscriptionName, groupName)) {
@@ -101,7 +123,12 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 	}
 
 	@Override
-	public void deleteSubscription(@NonNull String subscriptionName, String groupName) {
+	public void deleteSubscription(@NonNull String subscriptionName) {
+		deleteSubscription(subscriptionName, "");
+	}
+
+	@Override
+	public void deleteSubscription(@NonNull String subscriptionName, @NonNull String groupName) {
 		if (isRegistredSubscription(subscriptionName, groupName)) {
 			String subscriptionNameWithGroupName = getSubscriptionNameWithGroupName(subscriptionName, groupName);
 
@@ -116,7 +143,12 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 	}
 
 	@Override
-	public boolean isRegistredSubscription(@NonNull String subscriptionName, String groupName) {
+	public boolean isRegistredSubscription(@NonNull String subscriptionName) {
+		return isRegistredSubscription(subscriptionName, "");
+	}
+
+	@Override
+	public boolean isRegistredSubscription(@NonNull String subscriptionName, @NonNull String groupName) {
 		String subscriptionNameWithGroupName = getSubscriptionNameWithGroupName(subscriptionName, groupName);
 
 		return listSubscriptions().stream()
@@ -125,7 +157,13 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 
 	@Override
 	public <T> MessageBusAdmin consumeMessages(@NonNull String subscriptionName, @NonNull String topicName,
-			String groupName, @NonNull Class<T> payloadType, @NonNull ActionOnConsumeMessage<T> action) {
+			@NonNull Class<T> payloadType, @NonNull ActionOnConsumeMessage<T> action) {
+		return consumeMessages(subscriptionName, topicName, "", payloadType, action);
+	}
+
+	@Override
+	public <T> MessageBusAdmin consumeMessages(@NonNull String subscriptionName, @NonNull String topicName,
+			@NonNull String groupName, @NonNull Class<T> payloadType, @NonNull ActionOnConsumeMessage<T> action) {
 
 		createSubscriptionForTopic(subscriptionName, topicName, groupName);
 
@@ -144,8 +182,14 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 	}
 
 	@Override
-	public <T> void publishMessage(@NonNull String topicName, String groupName, @NonNull Class<T> payloadType,
-			@NonNull T payloadObject, ImmutableMap<String, String> headers) {
+	public <T> void publishMessage(@NonNull String topicName, @NonNull Class<T> payloadType, @NonNull T payloadObject,
+			ImmutableMap<String, Object> headers) {
+		publishMessage(topicName, "", payloadType, payloadObject, headers);
+	}
+
+	@Override
+	public <T> void publishMessage(@NonNull String topicName, @NonNull String groupName, @NonNull Class<T> payloadType,
+			@NonNull T payloadObject, ImmutableMap<String, Object> headers) {
 
 		if (headers == null)
 			headers = ImmutableMap.of();
@@ -155,7 +199,17 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 
 		String json = stringfyJson(payloadObject);
 		log.info("Sending message to topic '" + topicNameWithGroupName + "' ->  " + json);
-		pubSubTemplate.publish(topicNameWithGroupName, json, headers);
+
+		Map<String, String> stringHeaders = new HashMap<>();
+
+		if (headers != null) {
+			for (Entry<String, Object> entry : headers.entrySet()) {
+				if (entry.getValue() instanceof String)
+					stringHeaders.put(entry.getKey(), (String) entry.getValue());
+			}
+		}
+
+		pubSubTemplate.publish(topicNameWithGroupName, json, ImmutableMap.copyOf(stringHeaders));
 	}
 
 	private static ObjectMapper getObjectMapper() {
