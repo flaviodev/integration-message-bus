@@ -27,7 +27,7 @@ public class EmployeeUpdateReceiverTenant2Config implements ReceiverConfig {
 
 	@Override
 	public String getTopicName() {
-		return MessageSubscription.UPDATE_EMPLOYEE_DEFAULT.getTopicName() + "-" + TENANT_ID;
+		return MessageSubscription.UPDATE_EMPLOYEE_DEFAULT.getTopicName();
 	}
 
 	@Override

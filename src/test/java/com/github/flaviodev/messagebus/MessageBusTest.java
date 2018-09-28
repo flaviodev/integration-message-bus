@@ -30,9 +30,7 @@ public class MessageBusTest {
 
 	private static final String TENANT_ID = "1251856f568g1688g651g8gg";
 	private static final String TOPIC = "employee-test";
-	private static final String SUBSCRIPTION = "subscription-employee-test";
-	private static final String TOPIC_REDIRECT = TOPIC + "-" + TENANT_ID;
-	private static final String SUBSCRIPTION_REDIRECT = SUBSCRIPTION + "-" + TENANT_ID;
+	private static final String SUBSCRIPTION = "subscription-employee-test" + "-" + TENANT_ID;
 
 	@MockBean
 	private EmployeeUpdateReceiverRedirectConfig employeeUpdateReceiverRedirect;
@@ -49,7 +47,7 @@ public class MessageBusTest {
 
 		simulatePublicationOnTopic();
 
-		consumeAndRedirectMessage();
+	//	consumeAndRedirectMessage();
 
 		final Employee employeeReturned = new Employee();
 		consumingRedirectedMessage(employeeReturned);
@@ -60,20 +58,17 @@ public class MessageBusTest {
 	}
 
 	private void consumingRedirectedMessage(final Employee employeeReturned) {
-		messageBusAdmin.consumeMessages(SUBSCRIPTION_REDIRECT, TOPIC_REDIRECT, Employee.class, (headers, employee) -> {
+		messageBusAdmin.consumeMessages(SUBSCRIPTION, TOPIC, Employee.class, (headers, employee) -> {
 			employeeReturned.setName(employee.getName());
 		});
 
 		await().timeout(60, TimeUnit.SECONDS).until(() -> employeeReturned.getName() != null);
 	}
 
-	private void consumeAndRedirectMessage() {
-		employeeUpdateReceiverRedirect.consumeMessage();
-	}
 
 	private void simulatePublicationOnTopic() {
 		messageBusAdmin.sendMessage(TOPIC, Employee.class, new Employee("Flavio"),
-				ImmutableMap.of("tenantId", TENANT_ID));
+				ImmutableMap.of("routingKey", TENANT_ID));
 	}
 
 	private void creatingSubscriptions() {
@@ -81,23 +76,21 @@ public class MessageBusTest {
 		messageBusAdmin.createSubscriptionForTopic(SUBSCRIPTION, TOPIC);
 		await().until(() -> messageBusAdmin.isRegistredSubscription(SUBSCRIPTION));
 
-		messageBusAdmin.createSubscriptionForTopic(SUBSCRIPTION_REDIRECT, TOPIC_REDIRECT);
-		await().until(() -> messageBusAdmin.isRegistredSubscription(SUBSCRIPTION_REDIRECT));
+//		messageBusAdmin.createSubscriptionForTopic(SUBSCRIPTION_REDIRECT, TOPIC);
+//		await().until(() -> messageBusAdmin.isRegistredSubscription(SUBSCRIPTION_REDIRECT));
 	}
 
 	private void mockingEmployeeUpdateReceiverRedirectMethods() {
 		given(employeeUpdateReceiverRedirect.getMessageBusAdmin()).willReturn(messageBusAdmin);
 		given(employeeUpdateReceiverRedirect.getTopicName()).willReturn(TOPIC);
 		given(employeeUpdateReceiverRedirect.getSubscriptionName()).willReturn(SUBSCRIPTION);
-		given(employeeUpdateReceiverRedirect.getTopicRedirectName(TENANT_ID)).willReturn(TOPIC_REDIRECT);
 		given(employeeUpdateReceiverRedirect.consumeMessage()).willCallRealMethod();
 	}
 
 	private void deletingTopicsAndSubscriptionsCreatedsForTest() {
 		messageBusAdmin.deleteSubscription(SUBSCRIPTION);
 		messageBusAdmin.deleteTopic(TOPIC);
-		messageBusAdmin.deleteSubscription(SUBSCRIPTION_REDIRECT);
-		messageBusAdmin.deleteTopic(TOPIC_REDIRECT);
+//		messageBusAdmin.deleteSubscription(SUBSCRIPTION_REDIRECT);
 	}
 
 	@Test

@@ -29,7 +29,7 @@ public class SenderEmployeeRoutingConfig implements SenderConfig<SenderEmployeeR
 	@Bean("senderEmployeeRouting")
 	@Override
 	public SenderEmployeeRouting sendMessage() {
-		return (tenantId, employee) -> getMessageBusAdmin().sendMessage(getTopicName(), Employee.class, employee,
-				ImmutableMap.of("tenantId", tenantId));
+		return (routingKey, employee) -> getMessageBusAdmin().sendMessage(getTopicName(), Employee.class, employee,
+				ImmutableMap.of("routingKey", routingKey));
 	}
 }

@@ -11,6 +11,7 @@ import com.github.flaviodev.employee.messagebus.base.ReceiverRedirectConfig;
 import com.github.flaviodev.employee.model.Employee;
 import com.google.common.collect.ImmutableMap;
 
+import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j;
 
 @Log4j
@@ -28,8 +29,10 @@ public class EmployeeUpdateReceiverRedirectConfig implements ReceiverRedirectCon
 		return MessageSubscription.UPDATE_EMPLOYEE_DEFAULT.getTopicName();
 	}
 
-	public String getTopicRedirectName(String tenantId) {
-		return getTopicName() + "-" + tenantId;
+	@SneakyThrows
+	public String getTopicRedirectName(String routingKey) {
+		throw new IllegalAccessException(
+				"The RabbitMQ implementation does not use a different topic (exchange) for message routing");
 	}
 
 	@Override
@@ -43,14 +46,22 @@ public class EmployeeUpdateReceiverRedirectConfig implements ReceiverRedirectCon
 		log.info("Loading employee update receiver");
 		getMessageBusAdmin().consumeMessages(getSubscriptionName(), getTopicName(), Employee.class,
 				(headers, employee) -> {
-					String tenantId = headers.get("tenantId");
+					String routingKey = headers.get("routingKey");
 
-					if (tenantId != null) {
-						log.info("Processing and routing employee to tenant [" + tenantId + "]:" + employee);
-						getMessageBusAdmin().sendMessage(getTopicRedirectName(tenantId), Employee.class, employee,
-								ImmutableMap.of());
+					if (routingKey != null) {
+						createSubscriptionForTopicBasedOnRoutingKey(getSubscriptionName(), getTopicName(), routingKey);
+
+						log.info("Processing and routing employee to routingKey '" + routingKey + "' -> "
+								+ employee);
+						getMessageBusAdmin().sendMessage(getTopicName(), Employee.class, employee,
+								ImmutableMap.of("routingKey", routingKey));
 					}
 				});
 		return this;
+	}
+
+	private void createSubscriptionForTopicBasedOnRoutingKey(String subscriptionName, String topicName,
+			String routingKey) {
+		getMessageBusAdmin().createSubscriptionForTopic(subscriptionName + "-" + routingKey, topicName + "-" + routingKey);
 	}
 }
