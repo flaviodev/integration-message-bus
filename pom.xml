@@ -4,7 +4,7 @@
 
 	<groupId>com.github.flaviodev</groupId>
 	<artifactId>integration-message-bus</artifactId>
-	<version>1.0.1-rabbitmq</version>
+	<version>1.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>integration-message-bus</name>
@@ -13,6 +13,7 @@
 		<java.version>1.8</java.version>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
+		<spring-cloud-gcp.version>1.0.0.M3</spring-cloud-gcp.version>
 		<spring-boot-release.version>1.5.7.RELEASE</spring-boot-release.version>
 	</properties>
 
@@ -29,6 +30,10 @@
 			<version>4.5.0</version>
 		</dependency>
 
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-gcp-starter-pubsub</artifactId>
+		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -40,7 +45,6 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -100,16 +104,18 @@
 			<scope>test</scope>
 		</dependency>
 		
-		<dependency>
-			<groupId>org.awaitility</groupId>
-			<artifactId>awaitility-proxy</artifactId>
-			<version>3.0.0</version>
-			<scope>test</scope>
-		</dependency>
 	</dependencies>
 
 	<dependencyManagement>
 		<dependencies>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-gcp-dependencies</artifactId>
+				<version>${spring-cloud-gcp.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+
 			<dependency>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-dependencies</artifactId>

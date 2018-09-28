@@ -7,7 +7,7 @@
 	</configSuffixes>
 	<enableImports><![CDATA[false]]></enableImports>
 	<configs>
-		<config>java:com.github.flaviodev.employee.IntegrationMessageBusApplication</config>
+		<config>java:com.github.flaviodev.imb.IntegrationMessageBusApplication</config>
 	</configs>
 	<autoconfigs>
 	</autoconfigs>
