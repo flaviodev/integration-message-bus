@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.github.flaviodev.imb.messagebus.base.ConsumerConfig;
 import com.github.flaviodev.imb.messagebus.base.MessageBusAdmin;
@@ -15,6 +16,7 @@ import lombok.extern.log4j.Log4j;
 
 @Log4j
 @Configuration
+@Transactional
 public class ConsumeEmployeeUpdateTenant2Config implements ConsumerConfig {
 
 	private static final String TENANT_ID = "dcab14bd67a542b68068d995a96adbdf";

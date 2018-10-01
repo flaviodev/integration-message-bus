@@ -62,12 +62,6 @@ public class MessageBusTest {
 
 		consumeEmployeeUpdateRedirect.consumeMessage();
 
-		System.out.println("antes");
-		
-		await().timeout(20, TimeUnit.SECONDS).pollDelay(15, TimeUnit.SECONDS).until(() -> true);
-
-		System.out.println("depois");
-		
 		consumeEmployeeUpdateTenant1.consumeMessage();
 
 		waitingConsumeEmployeeUpdateTenant1();
@@ -81,7 +75,11 @@ public class MessageBusTest {
 		given(consumeEmployeeUpdateRedirect.getMessageBusAdmin()).willReturn(messageBusAdmin);
 		given(consumeEmployeeUpdateRedirect.getTopicName()).willReturn(TOPIC_TEST);
 		given(consumeEmployeeUpdateRedirect.getSubscriptionName()).willReturn(SUBSCRIPTION_TEST);
-		given(consumeEmployeeUpdateRedirect.getGroupName()).willReturn(null);
+		given(consumeEmployeeUpdateRedirect.getGroupName()).willReturn("");
+		given(consumeEmployeeUpdateRedirect.getRedirectGroupName(ImmutableMap.of("routingKey", GROUP_TENANT1_TEST)))
+				.willReturn(GROUP_TENANT1_TEST);
+		given(consumeEmployeeUpdateRedirect
+				.doesMeetTheRedirectionCondition(ImmutableMap.of("routingKey", GROUP_TENANT1_TEST))).willReturn(true);
 		given(consumeEmployeeUpdateRedirect.consumeMessage()).willCallRealMethod();
 	}
 

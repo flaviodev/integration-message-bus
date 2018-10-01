@@ -5,17 +5,21 @@ import static org.awaitility.Awaitility.await;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.github.flaviodev.imb.messagebus.base.ConsumerConfig;
 import com.github.flaviodev.imb.messagebus.base.MessageBusAdmin;
 import com.github.flaviodev.imb.messagebus.base.MessageSubscription;
+import com.github.flaviodev.imb.messagebus.base.RedirectConsumerConfig;
 import com.github.flaviodev.imb.model.Employee;
+import com.google.common.collect.ImmutableMap;
 
 import lombok.extern.log4j.Log4j;
 
 @Log4j
 @Configuration
-public class ConsumeEmployeeUpdateRedirectConfig implements ConsumerConfig {
+@Transactional
+public class ConsumeEmployeeUpdateRedirectConfig implements RedirectConsumerConfig {
 
 	@Autowired
 	private MessageBusAdmin messageBusAdmin;
@@ -34,9 +38,20 @@ public class ConsumeEmployeeUpdateRedirectConfig implements ConsumerConfig {
 	}
 
 	@Override
+	public String getRedirectGroupName(ImmutableMap<String, Object> headers) {
+		return headers!= null && headers.get("routingKey")!=null ? (String) headers.get("routingKey") : "";
+	}
+	
+	@Override
+	public boolean doesMeetTheRedirectionCondition(ImmutableMap<String, Object> headers) {
+		return headers!= null && headers.get("routingKey")!=null;
+	}
+
+	@Override
 	public MessageBusAdmin getMessageBusAdmin() {
 		return messageBusAdmin;
 	}
+
 
 	@Bean("employeeUpdateRedirect")
 	@Override
@@ -44,11 +59,11 @@ public class ConsumeEmployeeUpdateRedirectConfig implements ConsumerConfig {
 		log.info("Loading employee update receiver");
 		getMessageBusAdmin().consumeMessages(getSubscriptionName(), getTopicName(), Employee.class,
 				(headers, employee) -> {
-					String routingKey = (String) headers.get("routingKey");
-					log.info("Redirect for: " + routingKey);
 					
-					
-					if (routingKey != null) {
+					if(doesMeetTheRedirectionCondition(headers)) {
+						String routingKey = getRedirectGroupName(headers);
+						log.info("Redirect for: " + routingKey);
+						
 						createSubscriptionForTopicBasedOnRoutingKey(getSubscriptionName(), getTopicName(), routingKey);
 
 						log.info("Processing and routing employee to routingKey '" + routingKey + "' -> "
@@ -65,4 +80,5 @@ public class ConsumeEmployeeUpdateRedirectConfig implements ConsumerConfig {
 		
 		await().until(() -> messageBusAdmin.isRegistredSubscription(subscriptionName, routingKey));
 	}
+
 }
