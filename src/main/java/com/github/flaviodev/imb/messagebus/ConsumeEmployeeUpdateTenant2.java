@@ -1,8 +1,6 @@
 package com.github.flaviodev.imb.messagebus;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.github.flaviodev.imb.messagebus.base.ActionOnConsumeMessage;
@@ -15,14 +13,18 @@ import com.github.flaviodev.imb.tenant.TenantContext;
 import lombok.extern.log4j.Log4j;
 
 @Log4j
-@Configuration
 @Transactional
-public class ConsumeEmployeeUpdateTenant2Config implements ConsumerConfig<Employee> {
+public class ConsumeEmployeeUpdateTenant2 implements ConsumerConfig<Employee> {
 
 	private static final String TENANT_ID = "dcab14bd67a542b68068d995a96adbdf";
 
-	@Autowired
 	private MessageBusAdmin messageBusAdmin;
+
+	public ConsumeEmployeeUpdateTenant2(MessageBusAdmin messageBusAdmin) {
+		this.messageBusAdmin = messageBusAdmin;
+		log.info("Loading employee receiver 2");
+		consumeMessage();
+	}
 
 	@Override
 	public String getSubscriptionName() {
@@ -52,17 +54,10 @@ public class ConsumeEmployeeUpdateTenant2Config implements ConsumerConfig<Employ
 			log.info("Processing and employee to tenant2 " + TENANT_ID + " :" + employee);
 		};
 	}
-	
+
 	@Override
 	public MessageBusAdmin getMessageBusAdmin() {
 		return messageBusAdmin;
 	}
 
-	@Bean("employeeUpdateTenant2")
-	@Override
-	public ConsumerConfig<Employee> consumeMessage() {
-		log.info("Loading employee receiver 2");
-		doConsumeMessage();
-		return this;
-	}
 }

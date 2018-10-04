@@ -11,11 +11,9 @@ public interface ConsumerConfig<T> {
 
 	ActionOnConsumeMessage<T> getActionOnConsumeMessage();
 
-	ConsumerConfig<T> consumeMessage();
-
 	MessageBusAdmin getMessageBusAdmin();
 
-	default void doConsumeMessage() {
+	default void consumeMessage() {
 		getMessageBusAdmin().consumeMessages(getSubscriptionName(), getTopicName(), getGroupName(), getPayloadType(),
 				getActionOnConsumeMessage());
 	}

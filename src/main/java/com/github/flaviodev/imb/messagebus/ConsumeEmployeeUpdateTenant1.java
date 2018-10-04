@@ -15,15 +15,19 @@ import com.github.flaviodev.imb.tenant.TenantContext;
 import lombok.extern.log4j.Log4j;
 
 @Log4j
-@Configuration
 @Transactional
-public class ConsumeEmployeeUpdateTenant1Config implements ConsumerConfig<Employee> {
+public class ConsumeEmployeeUpdateTenant1 implements ConsumerConfig<Employee> {
 
 	private static final String TENANT_ID = "26587a2c89be46b895d6d0f14d182d1a";
 
-	@Autowired
 	private MessageBusAdmin messageBusAdmin;
 
+	public ConsumeEmployeeUpdateTenant1(MessageBusAdmin messageBusAdmin) {
+		this.messageBusAdmin = messageBusAdmin;
+		log.info("Loading employee receiver 1");
+		consumeMessage();
+	}
+	
 	@Override
 	public String getSubscriptionName() {
 		return MessageSubscription.UPDATE_EMPLOYEE_DEFAULT.getName();
@@ -58,12 +62,5 @@ public class ConsumeEmployeeUpdateTenant1Config implements ConsumerConfig<Employ
 		return messageBusAdmin;
 	}
 
-	@Bean("employeeUpdateTenant1")
-	@Override
-	public ConsumerConfig<Employee> consumeMessage() {
-		log.info("Loading employee receiver 1");
-		doConsumeMessage();
-		
-		return this;
-	}
+
 }
