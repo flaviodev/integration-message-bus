@@ -4,7 +4,6 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.BDDMockito.given;
 
 import java.util.concurrent.TimeUnit;
 
@@ -16,11 +15,14 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.github.flaviodev.employee.IntegrationMessageBusApplication;
-import com.github.flaviodev.employee.SpringContext;
-import com.github.flaviodev.employee.messagebus.EmployeeUpdateReceiverRedirectConfig;
-import com.github.flaviodev.employee.messagebus.base.MessageBusAdmin;
-import com.github.flaviodev.employee.model.Employee;
+import com.github.flaviodev.imb.IntegrationMessageBusApplication;
+import com.github.flaviodev.imb.messagebus.ConsumeEmployeeUpdateTenant2Config;
+import com.github.flaviodev.imb.messagebus.base.MessageBusAdmin;
+import com.github.flaviodev.imb.messagebus.base.MessageTopic;
+import com.github.flaviodev.imb.model.Employee;
+import com.github.flaviodev.imb.persistence.UUIDGenerator;
+import com.github.flaviodev.imb.repository.EmployeeRepository;
+import com.github.flaviodev.imb.tenant.TenantContext;
 import com.google.common.collect.ImmutableMap;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -28,81 +30,44 @@ import com.google.common.collect.ImmutableMap;
 @ContextConfiguration(classes = IntegrationMessageBusApplication.class)
 public class MessageBusTest {
 
-	private static final String TENANT_ID = "1251856f568g1688g651g8gg";
-	private static final String TOPIC = "employee-test";
-	private static final String SUBSCRIPTION = "subscription-employee-test";
-	private static final String TOPIC_REDIRECT = TOPIC + "-" + TENANT_ID;
-	private static final String SUBSCRIPTION_REDIRECT = SUBSCRIPTION + "-" + TENANT_ID;
+	private static final String GROUP_TENANT1_TEST = "26587a2c89be46b895d6d0f14d182d1a";
+
+	private static final ImmutableMap<String, String> HEADER = ImmutableMap.of("routingKey", GROUP_TENANT1_TEST);
+
+	private static final String NAME_EMPLOYEE_TEST = "Employee_" + UUIDGenerator.uuid();
 
 	@MockBean
-	private EmployeeUpdateReceiverRedirectConfig employeeUpdateReceiverRedirect;
+	private ConsumeEmployeeUpdateTenant2Config consumeEmployeeUpdateTenant2;
 
 	@Autowired
-	MessageBusAdmin messageBusAdmin;
+	private MessageBusAdmin messageBusAdmin;
+
+	@Autowired
+	private EmployeeRepository employeeRepository;
 
 	@Test
 	public void shouldSendAndReceiveMessage() {
 
-		mockingEmployeeUpdateReceiverRedirectMethods();
-
-		creatingSubscriptions();
-
 		simulatePublicationOnTopic();
 
-		consumeAndRedirectMessage();
+		waitingConsumeEmployeeUpdateTenant1();
 
-		final Employee employeeReturned = new Employee();
-		consumingRedirectedMessage(employeeReturned);
-
-		deletingTopicsAndSubscriptionsCreatedsForTest();
-
-		assertEquals("Flavio", employeeReturned.getName());
-	}
-
-	private void consumingRedirectedMessage(final Employee employeeReturned) {
-		messageBusAdmin.consumeMessages(SUBSCRIPTION_REDIRECT, TOPIC_REDIRECT, Employee.class, (headers, employee) -> {
-			employeeReturned.setName(employee.getName());
-		});
-
-		await().timeout(60, TimeUnit.SECONDS).until(() -> employeeReturned.getName() != null);
-	}
-
-	private void consumeAndRedirectMessage() {
-		employeeUpdateReceiverRedirect.consumeMessage();
+		assertEquals(NAME_EMPLOYEE_TEST, employeeRepository.findByName(NAME_EMPLOYEE_TEST).getName());
 	}
 
 	private void simulatePublicationOnTopic() {
-		messageBusAdmin.sendMessage(TOPIC, Employee.class, new Employee("Flavio"),
-				ImmutableMap.of("tenantId", TENANT_ID));
+		messageBusAdmin.publishMessage(MessageTopic.UPDATE_EMPLOYEE.getName(), Employee.class,
+				new Employee(NAME_EMPLOYEE_TEST), HEADER);
 	}
 
-	private void creatingSubscriptions() {
-
-		messageBusAdmin.createSubscriptionForTopic(SUBSCRIPTION, TOPIC);
-		await().until(() -> messageBusAdmin.isRegistredSubscription(SUBSCRIPTION));
-
-		messageBusAdmin.createSubscriptionForTopic(SUBSCRIPTION_REDIRECT, TOPIC_REDIRECT);
-		await().until(() -> messageBusAdmin.isRegistredSubscription(SUBSCRIPTION_REDIRECT));
-	}
-
-	private void mockingEmployeeUpdateReceiverRedirectMethods() {
-		given(employeeUpdateReceiverRedirect.getMessageBusAdmin()).willReturn(messageBusAdmin);
-		given(employeeUpdateReceiverRedirect.getTopicName()).willReturn(TOPIC);
-		given(employeeUpdateReceiverRedirect.getSubscriptionName()).willReturn(SUBSCRIPTION);
-		given(employeeUpdateReceiverRedirect.getTopicRedirectName(TENANT_ID)).willReturn(TOPIC_REDIRECT);
-		given(employeeUpdateReceiverRedirect.consumeMessage()).willCallRealMethod();
-	}
-
-	private void deletingTopicsAndSubscriptionsCreatedsForTest() {
-		messageBusAdmin.deleteSubscription(SUBSCRIPTION);
-		messageBusAdmin.deleteTopic(TOPIC);
-		messageBusAdmin.deleteSubscription(SUBSCRIPTION_REDIRECT);
-		messageBusAdmin.deleteTopic(TOPIC_REDIRECT);
+	private void waitingConsumeEmployeeUpdateTenant1() {
+		TenantContext.setCurrentTenant(GROUP_TENANT1_TEST);
+		await().pollDelay(5, TimeUnit.SECONDS).timeout(60, TimeUnit.SECONDS).ignoreExceptions()
+				.until(() -> employeeRepository.findByName(NAME_EMPLOYEE_TEST) != null);
 	}
 
 	@Test
 	public void shouldCreateAndDeleteTopic() {
-		MessageBusAdmin messageBusAdmin = SpringContext.getBean(MessageBusAdmin.class);
 
 		messageBusAdmin.createTopic("employee");
 
@@ -119,7 +84,6 @@ public class MessageBusTest {
 
 	@Test
 	public void shouldCreateAndDeleteSubscription() {
-		MessageBusAdmin messageBusAdmin = SpringContext.getBean(MessageBusAdmin.class);
 
 		messageBusAdmin.createSubscriptionForTopic("employee-receive2", "employee2");
 
@@ -137,5 +101,4 @@ public class MessageBusTest {
 
 		messageBusAdmin.deleteTopic("employee2");
 	}
-
 }
