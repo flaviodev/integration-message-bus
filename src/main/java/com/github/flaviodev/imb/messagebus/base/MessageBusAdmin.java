@@ -43,8 +43,8 @@ public interface MessageBusAdmin {
 			Class<T> payloadType, ActionOnConsumeMessage<T> action);
 
 	<T> void publishMessage(String topicName, Class<T> payloadType, T payloadObject,
-			ImmutableMap<String, Object> headers);
+			ImmutableMap<String, String> headers);
 
 	<T> void publishMessage(String topicName, String groupName, Class<T> payloadType, T payloadObject,
-			ImmutableMap<String, Object> headers);
+			ImmutableMap<String, String> headers);
 }
