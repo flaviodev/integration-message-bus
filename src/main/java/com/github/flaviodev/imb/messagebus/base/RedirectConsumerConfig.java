@@ -2,9 +2,9 @@ package com.github.flaviodev.imb.messagebus.base;
 
 import com.google.common.collect.ImmutableMap;
 
-public interface RedirectConsumerConfig extends ConsumerConfig {
+public interface RedirectConsumerConfig<T> extends ConsumerConfig<T> {
 
-	String getRedirectGroupName(ImmutableMap<String, Object> headers);
+	String getRedirectGroupName(ImmutableMap<String, String> headers);
 
-	boolean doesMeetTheRedirectionCondition(ImmutableMap<String, Object> headers);
+	boolean doesMeetTheRedirectionCondition(ImmutableMap<String, String> headers);
 }
