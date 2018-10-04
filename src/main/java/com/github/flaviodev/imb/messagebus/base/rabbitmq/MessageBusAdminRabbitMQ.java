@@ -202,7 +202,13 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 
 				log.info("Consuming message of the subscription '" + subscriptionNameWithGroupName + "' -> " + message);
 
-				action.apply(ImmutableMap.copyOf(properties.getHeaders()), parseJson(payloadType, body));
+				Map<String, String> headers = new HashMap<>();
+
+				for (Entry<String, Object> entry : properties.getHeaders().entrySet()) {
+					headers.put(entry.getKey(), entry.getValue().toString());
+				}
+
+				action.apply(ImmutableMap.copyOf(headers), parseJson(payloadType, body));
 			}
 		};
 		getChannel().basicConsume(subscriptionNameWithGroupName, true, consumer);
@@ -212,23 +218,22 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 	@Override
 	@SneakyThrows
 	public <T> void publishMessage(@NonNull String topicName, @NonNull Class<T> payloadType, @NonNull T payloadObject,
-			ImmutableMap<String, Object> headers) {
+			ImmutableMap<String, String> headers) {
 		publishMessage(topicName, "", payloadType, payloadObject, headers);
 	}
 
 	@Override
 	@SneakyThrows
 	public <T> void publishMessage(@NonNull String topicName, @NonNull String groupName, @NonNull Class<T> payloadType,
-			@NonNull T payloadObject, ImmutableMap<String, Object> headers) {
+			@NonNull T payloadObject, ImmutableMap<String, String> headers) {
 		createTopic(topicName, groupName);
 
 		String json = stringfyJson(payloadObject);
 
-
 		Map<String, Object> headerMap = new HashMap<>();
-		
+
 		if (headers != null) {
-			for (Entry<String, Object> entry : headers.entrySet()) {
+			for (Entry<String, String> entry : headers.entrySet()) {
 				headerMap.put(entry.getKey(), entry.getValue());
 			}
 		}

@@ -6,5 +6,5 @@ import lombok.NonNull;
 
 @FunctionalInterface
 public interface ActionOnConsumeMessage<T> {
-	void apply(@NonNull ImmutableMap<String, Object> headers, @NonNull T payloadObject);
+	void apply(@NonNull ImmutableMap<String, String> headers, @NonNull T payloadObject);
 }

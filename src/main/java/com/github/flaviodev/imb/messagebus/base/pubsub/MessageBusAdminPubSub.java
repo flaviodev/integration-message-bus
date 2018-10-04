@@ -183,13 +183,13 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 
 	@Override
 	public <T> void publishMessage(@NonNull String topicName, @NonNull Class<T> payloadType, @NonNull T payloadObject,
-			ImmutableMap<String, Object> headers) {
+			ImmutableMap<String, String> headers) {
 		publishMessage(topicName, "", payloadType, payloadObject, headers);
 	}
 
 	@Override
 	public <T> void publishMessage(@NonNull String topicName, @NonNull String groupName, @NonNull Class<T> payloadType,
-			@NonNull T payloadObject, ImmutableMap<String, Object> headers) {
+			@NonNull T payloadObject, ImmutableMap<String, String> headers) {
 
 		if (headers == null)
 			headers = ImmutableMap.of();
@@ -203,9 +203,8 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 		Map<String, String> stringHeaders = new HashMap<>();
 
 		if (headers != null) {
-			for (Entry<String, Object> entry : headers.entrySet()) {
-				if (entry.getValue() instanceof String)
-					stringHeaders.put(entry.getKey(), (String) entry.getValue());
+			for (Entry<String, String> entry : headers.entrySet()) {
+				stringHeaders.put(entry.getKey(), entry.getValue());
 			}
 		}
 
