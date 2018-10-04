@@ -5,7 +5,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.view.RedirectView;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.flaviodev.imb.SpringContext;
 import com.github.flaviodev.imb.messagebus.PublisherEmployeeRouting;
 import com.github.flaviodev.imb.model.Employee;
