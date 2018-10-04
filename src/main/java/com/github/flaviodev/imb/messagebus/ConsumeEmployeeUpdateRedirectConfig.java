@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.github.flaviodev.imb.messagebus.base.ConsumerConfig;
+import com.github.flaviodev.imb.messagebus.base.ActionOnConsumeMessage;
 import com.github.flaviodev.imb.messagebus.base.MessageBusAdmin;
 import com.github.flaviodev.imb.messagebus.base.MessageSubscription;
 import com.github.flaviodev.imb.messagebus.base.RedirectConsumerConfig;
@@ -19,7 +19,7 @@ import lombok.extern.log4j.Log4j;
 @Log4j
 @Configuration
 @Transactional
-public class ConsumeEmployeeUpdateRedirectConfig implements RedirectConsumerConfig {
+public class ConsumeEmployeeUpdateRedirectConfig implements RedirectConsumerConfig<Employee> {
 
 	@Autowired
 	private MessageBusAdmin messageBusAdmin;
@@ -32,19 +32,39 @@ public class ConsumeEmployeeUpdateRedirectConfig implements RedirectConsumerConf
 	public String getGroupName() {
 		return "";
 	}
-	
+
 	public String getTopicName() {
 		return MessageSubscription.UPDATE_EMPLOYEE_DEFAULT.getTopicName();
 	}
 
 	@Override
-	public String getRedirectGroupName(ImmutableMap<String, Object> headers) {
-		return headers!= null && headers.get("routingKey")!=null ? (String) headers.get("routingKey") : "";
+	public Class<Employee> getPayloadType() {
+		return Employee.class;
 	}
-	
+
 	@Override
-	public boolean doesMeetTheRedirectionCondition(ImmutableMap<String, Object> headers) {
-		return headers!= null && headers.get("routingKey")!=null;
+	public String getRedirectGroupName(ImmutableMap<String, String> headers) {
+		return headers != null && headers.get("routingKey") != null ? headers.get("routingKey") : "";
+	}
+
+	@Override
+	public boolean doesMeetTheRedirectionCondition(ImmutableMap<String, String> headers) {
+		return headers != null && headers.get("routingKey") != null;
+	}
+
+	@Override
+	public ActionOnConsumeMessage<Employee> getActionOnConsumeMessage() {
+		return (headers, employee) -> {
+			if (doesMeetTheRedirectionCondition(headers)) {
+				String routingKey = getRedirectGroupName(headers);
+				log.info("Redirect for: " + routingKey);
+
+				createSubscriptionForTopicBasedOnRoutingKey(getSubscriptionName(), getTopicName(), routingKey);
+
+				log.info("Processing and routing employee to routingKey '" + routingKey + "' -> " + employee);
+				getMessageBusAdmin().publishMessage(getTopicName(), routingKey, Employee.class, employee, null);
+			}
+		};
 	}
 
 	@Override
@@ -52,33 +72,19 @@ public class ConsumeEmployeeUpdateRedirectConfig implements RedirectConsumerConf
 		return messageBusAdmin;
 	}
 
-
 	@Bean("employeeUpdateRedirect")
 	@Override
-	public ConsumerConfig consumeMessage() {
+	public RedirectConsumerConfig<Employee> consumeMessage() {
 		log.info("Loading employee update receiver");
-		getMessageBusAdmin().consumeMessages(getSubscriptionName(), getTopicName(), Employee.class,
-				(headers, employee) -> {
-					
-					if(doesMeetTheRedirectionCondition(headers)) {
-						String routingKey = getRedirectGroupName(headers);
-						log.info("Redirect for: " + routingKey);
-						
-						createSubscriptionForTopicBasedOnRoutingKey(getSubscriptionName(), getTopicName(), routingKey);
-
-						log.info("Processing and routing employee to routingKey '" + routingKey + "' -> "
-								+ employee);
-						getMessageBusAdmin().publishMessage(getTopicName(), routingKey, Employee.class, employee, null);
-					}
-				});
+		doConsumeMessage();
 		return this;
 	}
 
 	private void createSubscriptionForTopicBasedOnRoutingKey(String subscriptionName, String topicName,
 			String routingKey) {
 		getMessageBusAdmin().createSubscriptionForTopic(subscriptionName, topicName, routingKey);
-		
-		await().until(() -> messageBusAdmin.isRegistredSubscription(subscriptionName, routingKey));
+
+		await().until(() -> getMessageBusAdmin().isRegistredSubscription(subscriptionName, routingKey));
 	}
 
 }
