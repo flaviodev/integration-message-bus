@@ -28,7 +28,7 @@ public class PublishEmployeeRoutingConfig implements PublisherConfig<PublisherEm
 		return MessageTopic.UPDATE_EMPLOYEE.getName();
 	}
 
-	@Bean("publisherEmployeeRouting")
+	@Bean
 	@Override
 	public PublisherEmployeeRouting publishMessage() {
 		return (employee, groupName) -> getMessageBusAdmin().publishMessage(getTopicName(), groupName, Employee.class,
