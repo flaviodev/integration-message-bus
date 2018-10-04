@@ -22,7 +22,7 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 
 @Configuration
-public class MultiTenantConfig {
+public class MultiTenancyConfig {
 
 	@Autowired
 	MultiTenantConnectionProvider dsProvider;
