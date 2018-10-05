@@ -1,8 +1,5 @@
 package com.github.flaviodev.imb.messagebus;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.github.flaviodev.imb.messagebus.base.ActionOnConsumeMessage;
 import com.github.flaviodev.imb.messagebus.base.ConsumerConfig;
 import com.github.flaviodev.imb.messagebus.base.MessageBusAdmin;
@@ -13,7 +10,6 @@ import com.github.flaviodev.imb.tenant.TenantContext;
 import lombok.extern.log4j.Log4j;
 
 @Log4j
-@Transactional
 public class ConsumeEmployeeUpdateTenant2 implements ConsumerConfig<Employee> {
 
 	private static final String TENANT_ID = "dcab14bd67a542b68068d995a96adbdf";

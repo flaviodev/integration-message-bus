@@ -2,23 +2,18 @@ package com.github.flaviodev.imb.messagebus;
 
 import static org.awaitility.Awaitility.await;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.github.flaviodev.imb.messagebus.base.ActionOnConsumeMessage;
+import com.github.flaviodev.imb.messagebus.base.ConsumerConfig;
 import com.github.flaviodev.imb.messagebus.base.MessageBusAdmin;
 import com.github.flaviodev.imb.messagebus.base.MessageSubscription;
-import com.github.flaviodev.imb.messagebus.base.RedirectConsumerConfig;
 import com.github.flaviodev.imb.model.Employee;
 import com.google.common.collect.ImmutableMap;
 
 import lombok.extern.log4j.Log4j;
 
 @Log4j
-@Transactional
-public class ConsumeEmployeeUpdateRedirect implements RedirectConsumerConfig<Employee> {
+public class ConsumeEmployeeUpdateRedirect implements ConsumerConfig<Employee> {
 
-	
 	private MessageBusAdmin messageBusAdmin;
 
 	public ConsumeEmployeeUpdateRedirect(MessageBusAdmin messageBusAdmin) {
@@ -45,13 +40,11 @@ public class ConsumeEmployeeUpdateRedirect implements RedirectConsumerConfig<Emp
 		return Employee.class;
 	}
 
-	@Override
-	public String getRedirectGroupName(ImmutableMap<String, String> headers) {
+	private String getRedirectGroupName(ImmutableMap<String, String> headers) {
 		return headers != null && headers.get("routingKey") != null ? headers.get("routingKey") : "";
 	}
 
-	@Override
-	public boolean doesMeetTheRedirectionCondition(ImmutableMap<String, String> headers) {
+	private boolean doesMeetTheRedirectionCondition(ImmutableMap<String, String> headers) {
 		return headers != null && headers.get("routingKey") != null;
 	}
 
