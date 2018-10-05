@@ -1,9 +1,8 @@
-package com.github.flaviodev.imb.messagebus.config;
+package com.github.flaviodev.imb.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.github.flaviodev.imb.messagebus.ConsumeEmployeeUpdateRedirect;
 import com.github.flaviodev.imb.messagebus.ConsumeEmployeeUpdateTenant1;
@@ -16,7 +15,6 @@ import lombok.extern.log4j.Log4j;
 
 @Log4j
 @Configuration
-@Transactional
 public class MessageBusConfig {
 
 	@Autowired

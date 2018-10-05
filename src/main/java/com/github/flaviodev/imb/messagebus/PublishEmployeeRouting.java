@@ -1,14 +1,11 @@
 package com.github.flaviodev.imb.messagebus;
 
-import org.springframework.transaction.annotation.Transactional;
-
 import com.github.flaviodev.imb.messagebus.base.MessageBusAdmin;
 import com.github.flaviodev.imb.messagebus.base.MessageTopic;
 import com.github.flaviodev.imb.messagebus.base.PublisherConfig;
 import com.github.flaviodev.imb.model.Employee;
 import com.google.common.collect.ImmutableMap;
 
-@Transactional
 public class PublishEmployeeRouting implements PublisherConfig<PublisherEmployeeRouting> {
 
 	private MessageBusAdmin messageBusAdmin;
