@@ -10,9 +10,8 @@ import java.util.stream.Collectors;
 import org.springframework.amqp.core.Exchange;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitManagementTemplate;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.flaviodev.imb.messagebus.base.ActionOnConsumeMessage;
@@ -30,7 +29,7 @@ import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j;
 
 @Log4j
-@Configuration
+@Component
 public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 
 	private static ObjectMapper mapper;
@@ -57,12 +56,6 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 		}
 
 		return channel;
-	}
-
-	@Bean
-	@Override
-	public MessageBusAdmin messageBusAdmin() {
-		return this;
 	}
 
 	@Override
@@ -181,7 +174,6 @@ public class MessageBusAdminRabbitMQ implements MessageBusAdmin {
 			@NonNull Class<T> payloadType, @NonNull ActionOnConsumeMessage<T> action) {
 
 		return consumeMessages(subscriptionName, topicName, "", payloadType, action);
-
 	}
 
 	@Override

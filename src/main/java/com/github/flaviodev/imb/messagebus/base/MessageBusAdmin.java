@@ -34,8 +34,6 @@ public interface MessageBusAdmin {
 
 	boolean isRegistredSubscription(String subscriptionName, String groupName);
 
-	MessageBusAdmin messageBusAdmin();
-
 	<T> MessageBusAdmin consumeMessages(String subscriptionName, String topicName, Class<T> payloadType,
 			ActionOnConsumeMessage<T> action);
 

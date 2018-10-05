@@ -9,8 +9,8 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gcp.pubsub.PubSubAdmin;
 import org.springframework.cloud.gcp.pubsub.core.PubSubTemplate;
-import org.springframework.context.annotation.Bean;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.flaviodev.imb.messagebus.base.ActionOnConsumeMessage;
@@ -24,7 +24,7 @@ import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j;
 
 @Log4j
-// @Configuration
+//@Component
 public class MessageBusAdminPubSub implements MessageBusAdmin {
 
 	private static ObjectMapper mapper;
@@ -34,12 +34,6 @@ public class MessageBusAdminPubSub implements MessageBusAdmin {
 
 	@Autowired
 	private PubSubTemplate pubSubTemplate;
-
-	@Bean
-	@Override
-	public MessageBusAdmin messageBusAdmin() {
-		return this;
-	}
 
 	private String getTopicNameWithGroupName(@NonNull String topicName, @NonNull String groupName) {
 		if (!groupName.isEmpty())
